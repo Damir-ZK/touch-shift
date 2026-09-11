@@ -333,11 +333,11 @@ body {
   max-width: 1240px;
   width: 100%;
   margin: 0 auto;
-  padding: 1.5rem 2rem 2.5rem;
+  padding: 1rem 1.75rem 2rem;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -957,13 +957,13 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 1rem 0;
+  margin: 0.15rem 0 0.35rem;
 }
 
 .stage-card {
   width: 100%;
   max-width: min(100%, 1160px);
-  min-height: 220px;
+  min-height: 155px;
   background: var(--bg-card);
   border: 1px solid var(--bg-card-border);
   backdrop-filter: blur(16px);
@@ -974,7 +974,7 @@ body {
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 2.5rem 2rem;
+  padding: 1.1rem 1.75rem 1.35rem;
   transition: border-color var(--trans-normal), box-shadow var(--trans-normal);
   cursor: text;
 }
@@ -989,14 +989,14 @@ body {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  margin-bottom: 1.5rem;
+  margin-top: -0.2rem;
+  margin-bottom: 0.65rem;
   opacity: 0.9;
   transition: opacity var(--trans-fast);
 }
 
 .target-hint-bar.hidden {
-  opacity: 0;
-  pointer-events: none;
+  display: none !important;
 }
 
 .hint-pill {
@@ -1717,8 +1717,8 @@ body.mode-full-blindfold .stage-card,
 body.mode-zen .stage-card {
   max-width: min(100%, 1160px);
   width: 100%;
-  min-height: 220px;
-  padding: 3.5rem 3rem;
+  min-height: 170px;
+  padding: 2.2rem 2.5rem;
   box-shadow: var(--stage-shadow), 0 0 35px var(--accent-glow);
 }
 
