@@ -63,8 +63,8 @@ export class SequenceGenerator {
     this.currentPreset = 'en-shift';
     this.customChars = [...PRESETS['en-shift'].chars];
     this.weakChars = [];
-    this.minLength = 3;
-    this.maxLength = 6;
+    this.minLength = 4;
+    this.maxLength = 8;
   }
 
   setPreset(presetId) {
@@ -101,7 +101,7 @@ export class SequenceGenerator {
       if (!isNaN(fixed)) {
         this.setRange(fixed, fixed);
       } else {
-        this.setRange(3, 6);
+        this.setRange(4, 8);
       }
     }
   }

@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { PRESETS, SequenceGenerator } from '../src/engine/generator.js';
-import { KEY_DEFINITIONS, getCharMeta } from '../src/components/keyboardGuide.js';
+import { KEY_DEFINITIONS, getCharMeta, KeyboardGuide } from '../src/components/keyboardGuide.js';
 import { StatsTracker } from '../src/engine/stats.js';
 import { SpeedrunEngine } from '../src/engine/speedrunEngine.js';
 import { SurvivalEngine, MAX_LIVES, INITIAL_GHOST_CPM, MAX_GHOST_CPM } from '../src/engine/survivalEngine.js';
@@ -42,20 +42,22 @@ assert(ruShiftChars.includes('+'), 'RU shift must contain +');
 
 console.log('✓ Presets test passed.');
 
-// Test 2: Sequence Generator generates lengths between 3 and 6 characters
-console.log('Test 2: Verifying sequence lengths between 3 and 6...');
+// Test 2: Sequence Generator default lengths between 4 and 8 characters
+console.log('Test 2: Verifying default sequence lengths between 4 and 8...');
 const gen = new SequenceGenerator();
-gen.setLengthConfig('3-6');
 
-const lengthCounts = { 3: 0, 4: 0, 5: 0, 6: 0 };
-for (let i = 0; i < 200; i++) {
+const lengthCounts = { 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+for (let i = 0; i < 250; i++) {
   const seq = gen.generate();
-  assert(seq.length >= 3 && seq.length <= 6, `Generated length ${seq.length} must be between 3 and 6`);
+  assert(seq.length >= 4 && seq.length <= 8, `Generated length ${seq.length} must be between 4 and 8`);
   assert(!seq.includes(' '), 'Generated sequence must not contain spaces');
   lengthCounts[seq.length]++;
 }
-assert(lengthCounts[3] > 0 && lengthCounts[4] > 0 && lengthCounts[5] > 0 && lengthCounts[6] > 0, 'All lengths 3-6 should be sampled');
-console.log(`✓ Length distribution over 200 iterations: 3=${lengthCounts[3]}, 4=${lengthCounts[4]}, 5=${lengthCounts[5]}, 6=${lengthCounts[6]}`);
+assert(
+  lengthCounts[4] > 0 && lengthCounts[5] > 0 && lengthCounts[6] > 0 && lengthCounts[7] > 0 && lengthCounts[8] > 0,
+  'All default lengths 4-8 should be sampled'
+);
+console.log(`✓ Length distribution over 250 iterations: 4=${lengthCounts[4]}, 5=${lengthCounts[5]}, 6=${lengthCounts[6]}, 7=${lengthCounts[7]}, 8=${lengthCounts[8]}`);
 
 // Test 3: RU Shift generation
 console.log('Test 3: Testing Cyrillic Shift preset generation...');
@@ -117,6 +119,67 @@ assert.strictEqual(metaAmp.hand, 'right');
 assert.strictEqual(metaAmp.shiftHand, 'left');
 
 console.log('✓ Keyboard Guide and Shift hand rules verified perfectly.');
+
+// Test 4b: KeyboardGuide Ghost Mode Highlights
+console.log('Test 4b: Verifying KeyboardGuide Ghost Mode removes correct key highlight...');
+function createMockEl() {
+  const classes = new Set();
+  return {
+    className: '',
+    id: '',
+    innerHTML: '',
+    textContent: '',
+    appendChild() {},
+    classList: {
+      add(c) { classes.add(c); },
+      remove(c) { classes.delete(c); },
+      contains(c) { return classes.has(c); }
+    }
+  };
+}
+
+const origDoc = global.document;
+global.document = {
+  createElement: () => createMockEl(),
+  getElementById: () => createMockEl(),
+  body: createMockEl()
+};
+
+const guideContainer = createMockEl();
+const lShift = createMockEl();
+const rShift = createMockEl();
+const hintFinger = createMockEl();
+
+const guide = new KeyboardGuide({
+  containerEl: guideContainer,
+  lShiftEl: lShift,
+  rShiftEl: rShift,
+  hintFingerEl: hintFinger
+});
+
+// Full mode: highlighting '!' should highlight target key-1 and Right Shift
+guide.setMode('full');
+guide.highlight('!');
+const key1El = guide.keyElements.get('key-1');
+assert(key1El.classList.contains('active-target'), 'In full mode, key-1 must have active-target class');
+assert(rShift.classList.contains('active-shift'), 'In full mode, right shift must have active-shift class');
+
+// Ghost mode: highlighting '!' should NOT highlight key-1, but can still indicate Shift
+guide.setMode('ghost');
+assert(!key1El.classList.contains('active-target'), 'Switching to ghost mode must clear active-target on key-1');
+assert(rShift.classList.contains('active-shift'), 'Ghost mode can retain shift indicator');
+
+// Highlighting '1' (un-shifted) in ghost mode
+guide.highlight('1');
+assert(!key1El.classList.contains('active-target'), 'In ghost mode, key-1 must NOT be highlighted');
+assert(!rShift.classList.contains('active-shift'), 'In ghost mode, right shift is not active for un-shifted 1');
+
+// Switching back to full mode re-applies active-target immediately
+guide.setMode('full');
+assert(key1El.classList.contains('active-target'), 'Switching back to full mode must immediately restore key-1 active-target');
+
+global.document = origDoc;
+console.log('✓ KeyboardGuide Ghost mode correct key highlight suppression verified.');
 
 // Test 5: Stats Engine accuracy, streak, and weak keys
 console.log('Test 5: Testing StatsTracker...');

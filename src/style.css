@@ -1129,6 +1129,30 @@ body {
   filter: none;
 }
 
+/* In ghost mode, disable visual highlight for target key */
+.keyboard-section.mode-ghost .v-key.active-target {
+  border-color: var(--key-border);
+  background: var(--key-bg);
+  box-shadow: none;
+  transform: none;
+  z-index: auto;
+}
+
+.keyboard-section.mode-ghost .v-key.active-target .v-key-shift-en {
+  color: var(--text-muted);
+  text-shadow: none;
+}
+
+.keyboard-section.mode-ghost .v-key.active-target .v-key-shift-ru {
+  color: var(--accent-secondary);
+  text-shadow: none;
+}
+
+.keyboard-section.mode-ghost .v-key.active-target .v-key-base {
+  color: var(--text-main);
+  text-shadow: none;
+}
+
 .keyboard-section.mode-hidden {
   display: none !important;
 }

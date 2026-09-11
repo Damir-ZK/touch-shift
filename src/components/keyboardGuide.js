@@ -171,14 +171,15 @@ function capitalize(str) {
 }
 
 export class KeyboardGuide {
-  constructor({ containerEl, lShiftEl, rShiftEl, hintFingerEl }) {
+  constructor({ containerEl, lShiftEl, rShiftEl, hintFingerEl } = {}) {
     this.containerEl = containerEl;
     this.lShiftEl = lShiftEl;
     this.rShiftEl = rShiftEl;
     this.hintFingerEl = hintFingerEl;
-    this.sectionEl = document.getElementById('keyboard-section');
+    this.sectionEl = typeof document !== 'undefined' ? document.getElementById('keyboard-section') : null;
 
     this.mode = 'full'; // 'full' | 'ghost' | 'hidden'
+    this.currentChar = null;
     this.keyElements = new Map();
 
     this.render();
@@ -215,38 +216,49 @@ export class KeyboardGuide {
 
   setMode(mode) {
     this.mode = mode;
-    document.body.classList.remove('mode-full-blindfold', 'mode-zen');
-    if (!this.sectionEl) return;
+    if (typeof document !== 'undefined' && document.body) {
+      document.body.classList.remove('mode-full-blindfold', 'mode-zen');
+    }
+    if (this.sectionEl) {
+      this.sectionEl.classList.remove('mode-ghost', 'mode-hidden');
+      const hintBar = typeof document !== 'undefined' ? document.getElementById('target-hint-bar') : null;
 
-    this.sectionEl.classList.remove('mode-ghost', 'mode-hidden');
-    const hintBar = document.getElementById('target-hint-bar');
+      if (mode === 'ghost') {
+        this.sectionEl.classList.add('mode-ghost');
+        if (hintBar) hintBar.classList.remove('hidden');
+      } else if (mode === 'hidden') {
+        this.sectionEl.classList.add('mode-hidden');
+        if (hintBar) hintBar.classList.add('hidden');
+      } else if (mode === 'zen' || mode === 'full-blindfold') {
+        this.sectionEl.classList.add('mode-hidden');
+        if (typeof document !== 'undefined' && document.body) {
+          document.body.classList.add('mode-zen', 'mode-full-blindfold');
+        }
+        if (hintBar) hintBar.classList.add('hidden');
+      } else {
+        if (hintBar) hintBar.classList.remove('hidden');
+      }
+    }
 
-    if (mode === 'ghost') {
-      this.sectionEl.classList.add('mode-ghost');
-      if (hintBar) hintBar.classList.remove('hidden');
-    } else if (mode === 'hidden') {
-      this.sectionEl.classList.add('mode-hidden');
-      if (hintBar) hintBar.classList.add('hidden');
-    } else if (mode === 'zen' || mode === 'full-blindfold') {
-      this.sectionEl.classList.add('mode-hidden');
-      document.body.classList.add('mode-zen', 'mode-full-blindfold');
-      if (hintBar) hintBar.classList.add('hidden');
-    } else {
-      if (hintBar) hintBar.classList.remove('hidden');
+    if (this.currentChar) {
+      this.highlight(this.currentChar);
     }
   }
 
   highlight(char) {
+    this.currentChar = char;
     this.clearHighlight();
     if (!char) return;
 
     const meta = getCharMeta(char);
     if (!meta) return;
 
-    // Highlight key
-    const targetKeyEl = this.keyElements.get(meta.keyId);
-    if (targetKeyEl) {
-      targetKeyEl.classList.add('active-target');
+    // Highlight key (disabled in ghost mode to avoid visual cue for the correct key)
+    if (this.mode !== 'ghost') {
+      const targetKeyEl = this.keyElements.get(meta.keyId);
+      if (targetKeyEl) {
+        targetKeyEl.classList.add('active-target');
+      }
     }
 
     // Highlight shift key

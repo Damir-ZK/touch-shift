@@ -259,10 +259,10 @@ class TouchShiftApp {
     const savedMin = parseInt(localStorage.getItem('touchshift_min_len'), 10);
     const savedMax = parseInt(localStorage.getItem('touchshift_max_len'), 10);
 
-    const initialMin = !isNaN(savedMin) ? Math.max(1, Math.min(savedMin, this.maxFittingChars)) : 3;
+    const initialMin = !isNaN(savedMin) ? Math.max(1, Math.min(savedMin, this.maxFittingChars)) : 4;
     const initialMax = !isNaN(savedMax)
       ? Math.max(initialMin, Math.min(savedMax, this.maxFittingChars))
-      : Math.max(initialMin, Math.min(6, this.maxFittingChars));
+      : Math.max(initialMin, Math.min(8, this.maxFittingChars));
 
     this.setLengthRange(initialMin, initialMax, false);
     this.updatePopoverCapacity();
