@@ -171,12 +171,11 @@ function capitalize(str) {
 }
 
 export class KeyboardGuide {
-  constructor({ containerEl, lShiftEl, rShiftEl, hintFingerEl, hintShiftEl }) {
+  constructor({ containerEl, lShiftEl, rShiftEl, hintFingerEl }) {
     this.containerEl = containerEl;
     this.lShiftEl = lShiftEl;
     this.rShiftEl = rShiftEl;
     this.hintFingerEl = hintFingerEl;
-    this.hintShiftEl = hintShiftEl;
     this.sectionEl = document.getElementById('keyboard-section');
 
     this.mode = 'full'; // 'full' | 'ghost' | 'hidden'
@@ -216,7 +215,7 @@ export class KeyboardGuide {
 
   setMode(mode) {
     this.mode = mode;
-    document.body.classList.remove('mode-full-blindfold');
+    document.body.classList.remove('mode-full-blindfold', 'mode-zen');
     if (!this.sectionEl) return;
 
     this.sectionEl.classList.remove('mode-ghost', 'mode-hidden');
@@ -228,9 +227,9 @@ export class KeyboardGuide {
     } else if (mode === 'hidden') {
       this.sectionEl.classList.add('mode-hidden');
       if (hintBar) hintBar.classList.add('hidden');
-    } else if (mode === 'full-blindfold') {
+    } else if (mode === 'zen' || mode === 'full-blindfold') {
       this.sectionEl.classList.add('mode-hidden');
-      document.body.classList.add('mode-full-blindfold');
+      document.body.classList.add('mode-zen', 'mode-full-blindfold');
       if (hintBar) hintBar.classList.add('hidden');
     } else {
       if (hintBar) hintBar.classList.remove('hidden');
@@ -259,20 +258,10 @@ export class KeyboardGuide {
       }
     }
 
-    // Update hint badges
+    // Update hint badge (finger only)
     if (this.hintFingerEl) {
       this.hintFingerEl.textContent = meta.fingerName;
       this.hintFingerEl.className = `hint-pill finger-${meta.finger}`;
-    }
-
-    if (this.hintShiftEl) {
-      if (meta.isShift) {
-        this.hintShiftEl.textContent = `Hold ${capitalize(meta.shiftHand)} Shift`;
-        this.hintShiftEl.style.display = 'inline-block';
-      } else {
-        this.hintShiftEl.textContent = 'No Shift Needed';
-        this.hintShiftEl.style.display = 'inline-block';
-      }
     }
   }
 

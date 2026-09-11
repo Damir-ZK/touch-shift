@@ -141,4 +141,45 @@ const weak = stats.getWeakKeys(85, 1);
 assert(weak.some(w => w.char === '^'), '^ must be detected as weak key');
 console.log('✓ Stats engine test passed.');
 
-console.log('\n=== ALL 5 ENGINE TEST SUITES PASSED CLEANLY! ===\n');
+// Test 6: Arbitrary Min & Max Sequence Lengths and Fixed-Length Mode
+console.log('Test 6: Testing Arbitrary Min & Max and Fixed-Length generation...');
+const rangeGen = new SequenceGenerator();
+
+// Fixed length mode (min === max)
+rangeGen.setRange(5, 5);
+assert.strictEqual(rangeGen.minLength, 5);
+assert.strictEqual(rangeGen.maxLength, 5);
+for (let i = 0; i < 50; i++) {
+  const seq = rangeGen.generate();
+  assert.strictEqual(seq.length, 5, `When min=5 and max=5, generated sequence must always be exactly 5 chars, got ${seq.length}`);
+}
+
+// Single character fixed length (min=1, max=1)
+rangeGen.setRange(1, 1);
+for (let i = 0; i < 20; i++) {
+  const seq = rangeGen.generate();
+  assert.strictEqual(seq.length, 1, `When min=1 and max=1, generated sequence must always be 1 char, got ${seq.length}`);
+}
+
+// Arbitrary range (e.g. 2 to 8)
+rangeGen.setRange(2, 8);
+assert.strictEqual(rangeGen.minLength, 2);
+assert.strictEqual(rangeGen.maxLength, 8);
+const counts = {};
+for (let i = 0; i < 300; i++) {
+  const seq = rangeGen.generate();
+  assert(seq.length >= 2 && seq.length <= 8, `Sequence length ${seq.length} must be between 2 and 8`);
+  counts[seq.length] = (counts[seq.length] || 0) + 1;
+}
+for (let l = 2; l <= 8; l++) {
+  assert(counts[l] > 0, `Length ${l} should be generated at least once in 300 iterations`);
+}
+
+// Clamping validation (min must be at least 1, max cannot be less than min)
+rangeGen.setRange(0, -2);
+assert(rangeGen.minLength >= 1, 'Min length must be clamped to at least 1');
+assert(rangeGen.maxLength >= rangeGen.minLength, 'Max length must not be less than min length');
+
+console.log('✓ Arbitrary Min & Max and Fixed-Length generation test passed.');
+
+console.log('\n=== ALL 6 ENGINE TEST SUITES PASSED CLEANLY! ===\n');

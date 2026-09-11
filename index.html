@@ -83,7 +83,7 @@
           <button type="button" class="guide-mode-btn active" data-guide-mode="full" id="guide-mode-full">Guide</button>
           <button type="button" class="guide-mode-btn" data-guide-mode="ghost" id="guide-mode-ghost">Ghost</button>
           <button type="button" class="guide-mode-btn" data-guide-mode="hidden" id="guide-mode-hidden">Blindfold</button>
-          <button type="button" class="guide-mode-btn" data-guide-mode="full-blindfold" id="guide-mode-full-blindfold">Full Blindfold</button>
+          <button type="button" class="guide-mode-btn" data-guide-mode="zen" id="guide-mode-zen" title="Zen minimal focus mode">Zen</button>
         </div>
 
         <!-- Weak Keys / Heatmap Button -->
@@ -102,6 +102,8 @@
           <option value="terminal">Matrix Green</option>
           <option value="tokyo-night">Tokyo Night</option>
           <option value="nord-frost">Nord Frost</option>
+          <option value="snow-white">Snow White</option>
+          <option value="solarized-light">Solarized Light</option>
         </select>
       </div>
     </header>
@@ -121,14 +123,29 @@
 
     <!-- Sequence Config Bar (Length, Mode, Instant Restart) -->
     <div class="config-bar">
-      <div class="config-item">
+      <div class="config-item" id="length-config-item">
         <span class="config-label">Length:</span>
-        <div class="length-pills" id="length-selector">
-          <button type="button" class="length-pill active" data-len="3-6">3–6 (Random)</button>
-          <button type="button" class="length-pill" data-len="3">3</button>
-          <button type="button" class="length-pill" data-len="4">4</button>
-          <button type="button" class="length-pill" data-len="5">5</button>
-          <button type="button" class="length-pill" data-len="6">6</button>
+        <div class="length-steppers" id="length-steppers">
+          <!-- Min Stepper -->
+          <div class="stepper-box" title="Minimum sequence characters">
+            <span class="stepper-sublabel">Min</span>
+            <button type="button" class="stepper-btn" id="min-len-dec" aria-label="Decrease minimum characters">−</button>
+            <input type="number" id="min-len-input" class="stepper-input" min="1" max="10" value="3" aria-label="Minimum characters" />
+            <button type="button" class="stepper-btn" id="min-len-inc" aria-label="Increase minimum characters">+</button>
+          </div>
+
+          <span class="stepper-divider">–</span>
+
+          <!-- Max Stepper -->
+          <div class="stepper-box" title="Maximum sequence characters (capped by screen size)">
+            <span class="stepper-sublabel">Max</span>
+            <button type="button" class="stepper-btn" id="max-len-dec" aria-label="Decrease maximum characters">−</button>
+            <input type="number" id="max-len-input" class="stepper-input" min="1" max="10" value="6" aria-label="Maximum characters" />
+            <button type="button" class="stepper-btn" id="max-len-inc" aria-label="Increase maximum characters">+</button>
+          </div>
+
+          <!-- Summary / Status Badge -->
+          <span class="length-badge" id="length-badge" title="Active sequence length mode">3–6 (Random)</span>
         </div>
       </div>
 
@@ -185,7 +202,6 @@
         <!-- Target Character Finger Hint Badge (if guide enabled) -->
         <div class="target-hint-bar" id="target-hint-bar">
           <span class="hint-pill" id="hint-finger-badge">Ready</span>
-          <span class="hint-pill shift-hint" id="hint-shift-badge">Use Right Shift</span>
         </div>
 
         <!-- The Target Sequence Row -->
@@ -234,13 +250,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Footer with Tips and Quick Status -->
-    <footer class="app-footer">
-      <div class="footer-tips">
-        <span>💡 <strong>Touch-typing pro tip:</strong> Keep your fingers on the home row (<code>ASDF / JKL;</code>). Reach up to the number row with the correct finger, then return immediately.</span>
-      </div>
-    </footer>
   </div>
 
   <!-- Stats & Weak Keys Modal Drawer -->
