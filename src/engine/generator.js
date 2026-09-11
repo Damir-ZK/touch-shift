@@ -56,7 +56,8 @@ export class SequenceGenerator {
   constructor() {
     this.currentPreset = 'en-shift';
     this.customChars = [...PRESETS['en-shift'].chars];
-    this.lengthConfig = '3-6'; // '3-6', '3', '4', '5', '6'
+    this.minLength = 3;
+    this.maxLength = 6;
   }
 
   setPreset(presetId) {
@@ -71,8 +72,29 @@ export class SequenceGenerator {
     }
   }
 
+  setRange(min, max) {
+    const parsedMin = parseInt(min, 10);
+    const parsedMax = parseInt(max, 10);
+    this.minLength = Math.max(1, !isNaN(parsedMin) ? parsedMin : 3);
+    this.maxLength = Math.max(this.minLength, !isNaN(parsedMax) ? parsedMax : this.minLength);
+  }
+
   setLengthConfig(lengthConfig) {
-    this.lengthConfig = lengthConfig;
+    if (typeof lengthConfig === 'string' && lengthConfig.includes('-')) {
+      const [minStr, maxStr] = lengthConfig.split('-');
+      this.setRange(minStr, maxStr);
+    } else {
+      const fixed = parseInt(lengthConfig, 10);
+      if (!isNaN(fixed)) {
+        this.setRange(fixed, fixed);
+      } else {
+        this.setRange(3, 6);
+      }
+    }
+  }
+
+  getRange() {
+    return { min: this.minLength, max: this.maxLength };
   }
 
   getActivePool() {
@@ -83,12 +105,11 @@ export class SequenceGenerator {
   }
 
   determineLength() {
-    if (this.lengthConfig === '3-6') {
-      // Random integer between 3 and 6 inclusive
-      return Math.floor(Math.random() * 4) + 3;
+    if (this.minLength >= this.maxLength) {
+      return this.minLength;
     }
-    const parsed = parseInt(this.lengthConfig, 10);
-    return !isNaN(parsed) && parsed >= 2 ? parsed : 4;
+    const range = this.maxLength - this.minLength + 1;
+    return Math.floor(Math.random() * range) + this.minLength;
   }
 
   /**
