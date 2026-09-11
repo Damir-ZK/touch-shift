@@ -13,8 +13,8 @@
 
 const STORAGE_KEY_SURVIVAL_BEST = 'touchshift_survival_best';
 export const MAX_LIVES = 3;
-export const INITIAL_GHOST_CPM = 75;
-export const SPEEDUP_PER_WAVE_CPM = 7;
+export const INITIAL_GHOST_CPM = 40;
+export const SPEEDUP_PER_WAVE_CPM = 3;
 export const MAX_GHOST_CPM = 280;
 
 export class SurvivalEngine {

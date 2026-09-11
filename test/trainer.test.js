@@ -3,7 +3,7 @@ import { PRESETS, SequenceGenerator } from '../src/engine/generator.js';
 import { KEY_DEFINITIONS, getCharMeta, KeyboardGuide } from '../src/components/keyboardGuide.js';
 import { StatsTracker } from '../src/engine/stats.js';
 import { SpeedrunEngine } from '../src/engine/speedrunEngine.js';
-import { SurvivalEngine, MAX_LIVES, INITIAL_GHOST_CPM, MAX_GHOST_CPM } from '../src/engine/survivalEngine.js';
+import { SurvivalEngine, MAX_LIVES, INITIAL_GHOST_CPM, SPEEDUP_PER_WAVE_CPM, MAX_GHOST_CPM } from '../src/engine/survivalEngine.js';
 
 console.log('--- Running Automated Unit Tests for TouchShift Engine ---');
 
@@ -405,6 +405,8 @@ const survival = new SurvivalEngine({
 survival.start();
 assert.strictEqual(survival.lives, MAX_LIVES, `Must start with ${MAX_LIVES} lives`);
 assert.strictEqual(survival.wave, 1, 'Must start at Wave 1');
+assert.strictEqual(INITIAL_GHOST_CPM, 40, 'INITIAL_GHOST_CPM must be 40');
+assert.strictEqual(survival.ghostSpeedCPM, 40, 'Ghost speed must start at 40 CPM');
 assert.strictEqual(survival.ghostState, 'waiting', 'Ghost must initially be waiting');
 assert.strictEqual(survival.ghostActive, false, 'Ghost must be inactive before player hits first key');
 
@@ -438,8 +440,10 @@ survival.onPlayerKeyAdvance();
 survival.onPlayerSequenceComplete();
 assert.strictEqual(survival.wave, 2, 'Wave must advance to 2');
 assert.strictEqual(waveCompleteCalls, 1, 'onWaveComplete must be called');
+assert.strictEqual(survival.ghostSpeedCPM, INITIAL_GHOST_CPM + SPEEDUP_PER_WAVE_CPM, 'Ghost speed must scale with SPEEDUP_PER_WAVE_CPM');
 assert(survival.ghostSpeedCPM > INITIAL_GHOST_CPM, 'Ghost speed must increase with wave');
 assert(survival.ghostSpeedCPM <= MAX_GHOST_CPM, 'Ghost speed must not exceed MAX_GHOST_CPM cap');
+assert(SPEEDUP_PER_WAVE_CPM < 7, 'Speedup rate must be slower than previous 7 CPM');
 
 // Third lost life -> Game Over
 survival.onPlayerMistake();
