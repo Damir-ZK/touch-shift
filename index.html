@@ -18,49 +18,47 @@
   <input type="text" id="hidden-input" class="visually-hidden" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
 
   <div class="app-container">
-    <!-- Top Header Navigation & Controls -->
-    <header class="app-header">
-      <div class="brand-section">
-        <div class="brand-badge">
-          <span class="pulse-dot"></span>
-          <span class="badge-text">TouchShift</span>
+    <!-- Top Controls Cluster: Navigation, Practice Toolbar, and HUD -->
+    <div class="top-controls-cluster">
+      <header class="app-header">
+        <div class="brand-section">
+          <div class="brand-badge">
+            <span class="pulse-dot"></span>
+            <span class="badge-text">TouchShift</span>
+          </div>
+          <h1 class="visually-hidden">Blindfold Number &amp; Shift Layer Trainer</h1>
+          <span class="sub-badge">Blindfold Trainer</span>
         </div>
-        <h1 class="visually-hidden">Blindfold Number &amp; Shift Layer Trainer</h1>
-        <span class="sub-badge">Blindfold Trainer</span>
-      </div>
 
-      <!-- Center Preset Bar -->
-      <nav class="preset-selector" aria-label="Character Set Presets">
-        <button type="button" class="preset-pill active" data-preset="en-shift" id="preset-en-shift" title="English Shift Layer: !@#$%^&*()_+">
-          <span class="lang-flag">EN</span>
-          <span>Shift</span>
-          <span class="pill-preview">!@#$%</span>
-        </button>
-        <button type="button" class="preset-pill" data-preset="ru-shift" id="preset-ru-shift" title="Cyrillic Shift Layer: !&quot;№;%:?*()_+">
-          <span class="lang-flag">RU</span>
-          <span>Shift</span>
-          <span class="pill-preview">!"№;:</span>
-        </button>
-        <button type="button" class="preset-pill" data-preset="numbers" id="preset-numbers" title="Numbers Row: 1234567890-=">
-          <span class="lang-flag">123</span>
-          <span>Numbers</span>
-        </button>
-        <button type="button" class="preset-pill" data-preset="combined-en" id="preset-combined-en" title="Numbers + EN Shift">
-          <span class="lang-flag">EN+</span>
-          <span>Combined</span>
-        </button>
-        <button type="button" class="preset-pill" data-preset="combined-ru" id="preset-combined-ru" title="Numbers + RU Shift">
-          <span class="lang-flag">RU+</span>
-          <span>Combined</span>
-        </button>
-        <button type="button" class="preset-pill" data-preset="all" id="preset-all" title="All Mixed: Numbers + EN + RU">
-          <span class="lang-flag">ALL</span>
-          <span>Mixed</span>
-        </button>
-        <button type="button" class="preset-pill" data-preset="custom" id="preset-custom" title="Custom Character Selection">
-          <span>⚙️ Custom</span>
-        </button>
-      </nav>
+        <!-- Center Preset Bar -->
+        <nav class="preset-selector" aria-label="Character Set Presets">
+          <button type="button" class="preset-pill active" data-preset="en-shift" id="preset-en-shift" title="English Shift Layer: !@#$%^&*()_+">
+            <span class="lang-flag">EN</span>
+            <span>Shift</span>
+          </button>
+          <button type="button" class="preset-pill" data-preset="ru-shift" id="preset-ru-shift" title="Cyrillic Shift Layer: !&quot;№;%:?*()_+">
+            <span class="lang-flag">RU</span>
+            <span>Shift</span>
+          </button>
+          <button type="button" class="preset-pill" data-preset="numbers" id="preset-numbers" title="Numbers Row: 1234567890-=">
+            <span class="lang-flag">123</span>
+          </button>
+          <button type="button" class="preset-pill" data-preset="combined-en" id="preset-combined-en" title="Numbers + EN Shift">
+            <span class="lang-flag">EN+</span>
+            <span>Combined</span>
+          </button>
+          <button type="button" class="preset-pill" data-preset="combined-ru" id="preset-combined-ru" title="Numbers + RU Shift">
+            <span class="lang-flag">RU+</span>
+            <span>Combined</span>
+          </button>
+          <button type="button" class="preset-pill" data-preset="all" id="preset-all" title="All Mixed: Numbers + EN + RU">
+            <span class="lang-flag">ALL</span>
+            <span>Mixed</span>
+          </button>
+          <button type="button" class="preset-pill" data-preset="custom" id="preset-custom" title="Custom Character Selection">
+            <span>⚙️ Custom</span>
+          </button>
+        </nav>
 
       <!-- Right Control Bar -->
       <div class="header-controls">
@@ -187,9 +185,10 @@
         <span class="hud-sub" id="hud-session-time">00:00</span>
       </div>
     </div>
+  </div>
 
-    <!-- Main Stage: Sequence Display -->
-    <main class="training-stage" id="training-stage">
+  <!-- Main Stage: Sequence Display -->
+  <main class="training-stage" id="training-stage">
       <div class="stage-card" id="stage-card">
         <!-- Target Character Finger Hint Badge (if guide enabled) -->
         <div class="target-hint-bar" id="target-hint-bar">
