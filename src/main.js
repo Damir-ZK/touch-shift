@@ -47,6 +47,13 @@ class TouchShiftApp {
     this.soundIconOff = document.getElementById('sound-icon-off');
     this.themeSelector = document.getElementById('theme-selector');
 
+    // Manual Modal Elements
+    this.manualToggleBtn = document.getElementById('manual-toggle-btn');
+    this.manualModalEl = document.getElementById('manual-modal');
+    this.manualOverlayEl = document.getElementById('manual-overlay');
+    this.manualCloseBtn = document.getElementById('manual-close-btn');
+    this.manualDoneBtn = document.getElementById('manual-done-btn');
+
     // Sequence Font Scale State
     this.fontSize = parseFloat(localStorage.getItem('touchshift_font_size') || '3.2');
 
@@ -256,6 +263,17 @@ class TouchShiftApp {
     this.focusInput();
   }
 
+  openManual() {
+    if (!this.manualModalEl) return;
+    this.manualModalEl.classList.remove('hidden');
+  }
+
+  closeManual() {
+    if (!this.manualModalEl) return;
+    this.manualModalEl.classList.add('hidden');
+    this.focusInput();
+  }
+
   initGuideMode() {
     let savedMode = localStorage.getItem('touchshift_guide_mode') || 'full';
     if (savedMode === 'full-blindfold') savedMode = 'zen';
@@ -397,11 +415,41 @@ class TouchShiftApp {
       });
     }
 
-    // Close popover on Escape key
+    // Manual Modal Trigger & Close Events
+    if (this.manualToggleBtn) {
+      this.manualToggleBtn.addEventListener('click', () => {
+        this.openManual();
+      });
+    }
+
+    if (this.manualCloseBtn) {
+      this.manualCloseBtn.addEventListener('click', () => {
+        this.closeManual();
+      });
+    }
+
+    if (this.manualDoneBtn) {
+      this.manualDoneBtn.addEventListener('click', () => {
+        this.closeManual();
+      });
+    }
+
+    if (this.manualOverlayEl) {
+      this.manualOverlayEl.addEventListener('click', () => {
+        this.closeManual();
+      });
+    }
+
+    // Close popovers / modals on Escape key
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.popoverEl && !this.popoverEl.classList.contains('hidden')) {
-        e.stopPropagation();
-        this.closePopover();
+      if (e.key === 'Escape') {
+        if (this.popoverEl && !this.popoverEl.classList.contains('hidden')) {
+          e.stopPropagation();
+          this.closePopover();
+        } else if (this.manualModalEl && !this.manualModalEl.classList.contains('hidden')) {
+          e.stopPropagation();
+          this.closeManual();
+        }
       }
     }, { capture: true });
 

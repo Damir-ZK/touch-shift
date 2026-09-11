@@ -499,6 +499,32 @@ body {
   border-color: var(--accent-primary);
 }
 
+.manual-btn {
+  padding: 0.45rem 0.65rem;
+}
+
+.manual-glyph {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  transition: all var(--trans-fast);
+}
+
+.manual-btn:hover .manual-glyph {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-glow);
+  transform: scale(1.08);
+}
+
 .btn-svg {
   width: 18px;
   height: 18px;
@@ -1616,6 +1642,78 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Touch Typing Guide Modal (Clean Typography)
+   -------------------------------------------------------------------------- */
+.manual-card {
+  max-width: 600px;
+  max-height: 88vh;
+}
+
+.manual-header {
+  padding: 1.35rem 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--bg-surface-border);
+}
+
+.manual-clean-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+.manual-clean-body {
+  padding: 1.75rem 1.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-height: calc(88vh - 130px);
+  overflow-y: auto;
+}
+
+.manual-text-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.manual-text-heading {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  letter-spacing: -0.2px;
+  margin: 0;
+}
+
+.manual-text-p {
+  font-size: 0.88rem;
+  line-height: 1.62;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.manual-text-p kbd {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-surface-border);
+  padding: 0.12rem 0.38rem;
+  border-radius: 4px;
+  color: var(--text-main);
+}
+
+.manual-footer {
+  padding: 1rem 1.75rem;
+  border-top: 1px solid var(--bg-surface-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --------------------------------------------------------------------------
    Stats & Weak Keys Modal Drawer
    -------------------------------------------------------------------------- */
 .stats-drawer {
@@ -1917,6 +2015,8 @@ body.mode-full-blindfold .brand-section,
 body.mode-zen .brand-section,
 body.mode-full-blindfold .preset-selector,
 body.mode-zen .preset-selector,
+body.mode-full-blindfold #manual-toggle-btn,
+body.mode-zen #manual-toggle-btn,
 body.mode-full-blindfold #sound-toggle-btn,
 body.mode-zen #sound-toggle-btn,
 body.mode-full-blindfold #stats-open-btn,
