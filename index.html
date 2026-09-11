@@ -151,6 +151,8 @@
         <div class="mode-pills" id="mode-selector">
           <button type="button" class="mode-pill active" data-mode="strict" title="Instant Advance on correct key; wrong key flashes red">Strict</button>
           <button type="button" class="mode-pill" data-mode="buffer" title="Standard buffer with backspace allowed">Buffer</button>
+          <button type="button" class="mode-pill" data-mode="speedrun" id="mode-speedrun-btn" title="Speedrun: Type as many keys as you can in 1 minute">Speedrun</button>
+          <button type="button" class="mode-pill" data-mode="survival" id="mode-survival-btn" title="Survival: 3 lives, race against the ghost">Survival</button>
         </div>
       </div>
 
@@ -197,6 +199,61 @@
   <!-- Main Stage: Sequence Display -->
   <main class="training-stage" id="training-stage">
       <div class="stage-card" id="stage-card">
+        <!-- Speedrun HUD Banner (Active only in Speedrun mode) -->
+        <div class="speedrun-banner hidden" id="speedrun-banner" aria-label="Speedrun 60s Status">
+          <div class="speedrun-banner-left">
+            <span class="speedrun-icon">⏱️</span>
+            <div class="speedrun-timer-group">
+              <span class="speedrun-timer" id="speedrun-timer">60.0s</span>
+              <span class="speedrun-status-hint" id="speedrun-status-hint">Type any key to start</span>
+            </div>
+          </div>
+          <div class="speedrun-banner-center">
+            <div class="speedrun-progress-track">
+              <div class="speedrun-progress-fill" id="speedrun-progress-fill"></div>
+            </div>
+          </div>
+          <div class="speedrun-banner-right">
+            <div class="speedrun-badge">
+              <span class="badge-label">Typed:</span>
+              <span class="badge-val" id="speedrun-keys-badge">0 keys</span>
+            </div>
+            <div class="speedrun-badge subtle">
+              <span class="badge-label">Best:</span>
+              <span class="badge-val" id="speedrun-best-badge">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Survival HUD Banner (Active only in Survival mode) -->
+        <div class="survival-banner hidden" id="survival-banner" aria-label="Survival Mode Status">
+          <div class="survival-banner-left">
+            <span class="survival-label">LIVES</span>
+            <div class="survival-hearts" id="survival-hearts" title="3 Lives remaining">
+              <span class="survival-heart active" data-heart-idx="0">❤️</span>
+              <span class="survival-heart active" data-heart-idx="1">❤️</span>
+              <span class="survival-heart active" data-heart-idx="2">❤️</span>
+            </div>
+          </div>
+          <div class="survival-banner-center">
+            <div class="survival-wave-pill">
+              <span class="wave-icon">🌊</span>
+              <span id="survival-wave-val">Wave 1</span>
+            </div>
+            <div class="survival-ghost-pill" id="survival-ghost-pill">
+              <span class="ghost-badge-icon" id="ghost-badge-icon">👻</span>
+              <span class="ghost-status-text" id="ghost-status-text">Ghost waiting for first key...</span>
+              <span class="ghost-speed-num" id="ghost-speed-num">75 CPM</span>
+            </div>
+          </div>
+          <div class="survival-banner-right">
+            <div class="survival-badge subtle">
+              <span class="badge-label">Best Wave:</span>
+              <span class="badge-val" id="survival-best-badge">0</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Target Character Finger Hint Badge (if guide enabled) -->
         <div class="target-hint-bar" id="target-hint-bar">
           <span class="hint-pill" id="hint-finger-badge">Ready</span>
@@ -441,6 +498,108 @@
 
       <div class="popover-footer manual-footer">
         <button type="button" class="primary-btn-sm" id="manual-done-btn">Got It</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Speedrun Results Modal -->
+  <aside id="speedrun-modal" class="modal-dialog hidden" aria-modal="true" role="dialog" aria-labelledby="speedrun-title">
+    <div class="popover-overlay" id="speedrun-overlay"></div>
+    <div class="popover-card result-modal-card">
+      <div class="popover-header result-modal-header">
+        <div class="result-title-group">
+          <span class="result-trophy-icon">⏱️</span>
+          <div>
+            <h2 id="speedrun-title" class="popover-title">Speedrun Complete!</h2>
+            <p class="popover-sub" id="speedrun-subtitle">60-second typing sprint summary</p>
+          </div>
+        </div>
+        <button type="button" class="icon-btn-close" id="speedrun-close-btn" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="popover-body">
+        <div class="result-hero-stat">
+          <span class="result-hero-num" id="speedrun-result-keys">0</span>
+          <span class="result-hero-label">Total Keys Typed in 60s</span>
+          <div class="new-record-pill hidden" id="speedrun-new-record">🎉 NEW PERSONAL BEST!</div>
+        </div>
+
+        <div class="stats-summary-grid result-grid">
+          <div class="stat-card">
+            <span class="stat-card-num" id="speedrun-result-cpm">0</span>
+            <span class="stat-card-label">Speed (CPM)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="speedrun-result-wpm">0</span>
+            <span class="stat-card-label">Speed (WPM)</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="speedrun-result-acc">100%</span>
+            <span class="stat-card-label">Accuracy</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="speedrun-result-best">0</span>
+            <span class="stat-card-label">All-Time Best Keys</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popover-footer result-footer">
+        <button type="button" class="primary-btn-sm" id="speedrun-retry-btn">
+          <span>Play Again</span>
+          <kbd class="btn-kbd">Enter</kbd>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Survival Game Over Modal -->
+  <aside id="survival-modal" class="modal-dialog hidden" aria-modal="true" role="dialog" aria-labelledby="survival-title">
+    <div class="popover-overlay" id="survival-overlay"></div>
+    <div class="popover-card result-modal-card survival-theme-card">
+      <div class="popover-header result-modal-header">
+        <div class="result-title-group">
+          <span class="result-trophy-icon">💀</span>
+          <div>
+            <h2 id="survival-title" class="popover-title">Survival Run Ended</h2>
+            <p class="popover-sub" id="survival-cause-text">All 3 lives were lost.</p>
+          </div>
+        </div>
+        <button type="button" class="icon-btn-close" id="survival-close-btn" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="popover-body">
+        <div class="result-hero-stat">
+          <span class="result-hero-num" id="survival-result-waves">0</span>
+          <span class="result-hero-label">Waves Survived</span>
+          <div class="new-record-pill hidden" id="survival-new-record">🔥 NEW RECORD WAVE!</div>
+        </div>
+
+        <div class="stats-summary-grid result-grid">
+          <div class="stat-card">
+            <span class="stat-card-num" id="survival-result-keys">0</span>
+            <span class="stat-card-label">Total Keys Survived</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="survival-result-speed">75</span>
+            <span class="stat-card-label">Ghost CPM Reached</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="survival-result-errors">0</span>
+            <span class="stat-card-label">Misses Made</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="survival-result-best">0</span>
+            <span class="stat-card-label">Best Wave Record</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="popover-footer result-footer">
+        <button type="button" class="primary-btn-sm" id="survival-retry-btn">
+          <span>Play Again</span>
+          <kbd class="btn-kbd">Enter</kbd>
+        </button>
       </div>
     </div>
   </aside>

@@ -9,12 +9,15 @@ import { StatsTracker } from './engine/stats.js';
 import { SoundSynthesizer } from './audio/soundEffects.js';
 import { KeyboardGuide } from './components/keyboardGuide.js';
 import { WeakKeysView } from './components/weakKeysView.js';
+import { SpeedrunEngine } from './engine/speedrunEngine.js';
+import { SurvivalEngine } from './engine/survivalEngine.js';
 
 class TouchShiftApp {
   constructor() {
     this.generator = new SequenceGenerator();
     this.stats = new StatsTracker();
     this.audio = new SoundSynthesizer();
+    this.currentMode = 'strict';
 
     // DOM Elements
     this.htmlEl = document.documentElement;
@@ -33,6 +36,48 @@ class TouchShiftApp {
     this.hudBestStreak = document.getElementById('hud-best-streak');
     this.hudCompleted = document.getElementById('hud-completed');
     this.hudSessionTime = document.getElementById('hud-session-time');
+
+    // Speedrun Elements
+    this.speedrunBanner = document.getElementById('speedrun-banner');
+    this.speedrunTimerEl = document.getElementById('speedrun-timer');
+    this.speedrunProgressFill = document.getElementById('speedrun-progress-fill');
+    this.speedrunKeysBadge = document.getElementById('speedrun-keys-badge');
+    this.speedrunBestBadge = document.getElementById('speedrun-best-badge');
+    this.speedrunStatusHint = document.getElementById('speedrun-status-hint');
+
+    // Speedrun Modal Elements
+    this.speedrunModalEl = document.getElementById('speedrun-modal');
+    this.speedrunOverlayEl = document.getElementById('speedrun-overlay');
+    this.speedrunCloseBtn = document.getElementById('speedrun-close-btn');
+    this.speedrunRetryBtn = document.getElementById('speedrun-retry-btn');
+    this.speedrunResultKeys = document.getElementById('speedrun-result-keys');
+    this.speedrunResultCpm = document.getElementById('speedrun-result-cpm');
+    this.speedrunResultWpm = document.getElementById('speedrun-result-wpm');
+    this.speedrunResultAcc = document.getElementById('speedrun-result-acc');
+    this.speedrunResultBest = document.getElementById('speedrun-result-best');
+    this.speedrunNewRecord = document.getElementById('speedrun-new-record');
+
+    // Survival Elements
+    this.survivalBanner = document.getElementById('survival-banner');
+    this.survivalHeartsEl = document.getElementById('survival-hearts');
+    this.survivalWaveValEl = document.getElementById('survival-wave-val');
+    this.survivalGhostPill = document.getElementById('survival-ghost-pill');
+    this.ghostStatusTextEl = document.getElementById('ghost-status-text');
+    this.ghostSpeedNumEl = document.getElementById('ghost-speed-num');
+    this.survivalBestBadge = document.getElementById('survival-best-badge');
+
+    // Survival Modal Elements
+    this.survivalModalEl = document.getElementById('survival-modal');
+    this.survivalOverlayEl = document.getElementById('survival-overlay');
+    this.survivalCloseBtn = document.getElementById('survival-close-btn');
+    this.survivalRetryBtn = document.getElementById('survival-retry-btn');
+    this.survivalCauseText = document.getElementById('survival-cause-text');
+    this.survivalResultWaves = document.getElementById('survival-result-waves');
+    this.survivalResultKeys = document.getElementById('survival-result-keys');
+    this.survivalResultSpeed = document.getElementById('survival-result-speed');
+    this.survivalResultErrors = document.getElementById('survival-result-errors');
+    this.survivalResultBest = document.getElementById('survival-result-best');
+    this.survivalNewRecord = document.getElementById('survival-new-record');
 
     // Custom Panel Elements
     this.customPanel = document.getElementById('custom-chars-panel');
@@ -91,10 +136,34 @@ class TouchShiftApp {
       onDrillWeakKeys: (weakChars) => this.startDrillingWeakKeys(weakChars)
     });
 
+    // Initialize Speedrun Engine
+    this.speedrunEngine = new SpeedrunEngine({
+      onTick: (data) => this.handleSpeedrunTick(data),
+      onWarningTick: (second) => this.audio.playTimerTick(),
+      onComplete: (results) => this.handleSpeedrunComplete(results)
+    });
+
+    // Initialize Survival Engine
+    this.survivalEngine = new SurvivalEngine({
+      onGhostStep: (data) => this.handleGhostStep(data),
+      onGhostOvertake: (data) => this.handleGhostOvertake(data),
+      onLifeLost: (data) => this.handleLifeLost(data),
+      onWaveComplete: (data) => this.handleWaveComplete(data),
+      onGameOver: (results) => this.handleSurvivalGameOver(results),
+      onStateUpdate: (state) => this.handleSurvivalStateUpdate(state)
+    });
+
     // Initialize Trainer
     this.trainer = new TypingTrainer({
       generator: this.generator,
-      onSequenceUpdate: (data) => this.renderSequence(data),
+      onSequenceUpdate: (data) => {
+        if (this.currentMode === 'survival' && this.survivalEngine) {
+          if (data.isNew || data.isReset) {
+            this.survivalEngine.setSequence(data.sequence);
+          }
+        }
+        this.renderSequence(data);
+      },
       onCharAdvance: (data) => this.handleCharAdvance(data),
       onCharMistake: (data) => this.handleCharMistake(data),
       onSequenceComplete: (data) => this.handleSequenceComplete(data),
@@ -440,15 +509,41 @@ class TouchShiftApp {
       });
     }
 
-    // Close popovers / modals on Escape key
+    // Modal Close and Action Buttons for Speedrun
+    if (this.speedrunCloseBtn) this.speedrunCloseBtn.addEventListener('click', () => this.closeSpeedrunModal());
+    if (this.speedrunOverlayEl) this.speedrunOverlayEl.addEventListener('click', () => this.closeSpeedrunModal());
+    if (this.speedrunRetryBtn) this.speedrunRetryBtn.addEventListener('click', () => this.retrySpeedrun());
+
+    // Modal Close and Action Buttons for Survival
+    if (this.survivalCloseBtn) this.survivalCloseBtn.addEventListener('click', () => this.closeSurvivalModal());
+    if (this.survivalOverlayEl) this.survivalOverlayEl.addEventListener('click', () => this.closeSurvivalModal());
+    if (this.survivalRetryBtn) this.survivalRetryBtn.addEventListener('click', () => this.retrySurvival());
+
+    // Close popovers / modals on Escape key, or Retry on Enter key
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        if (this.popoverEl && !this.popoverEl.classList.contains('hidden')) {
+        if (this.speedrunModalEl && !this.speedrunModalEl.classList.contains('hidden')) {
+          e.stopPropagation();
+          this.closeSpeedrunModal();
+        } else if (this.survivalModalEl && !this.survivalModalEl.classList.contains('hidden')) {
+          e.stopPropagation();
+          this.closeSurvivalModal();
+        } else if (this.popoverEl && !this.popoverEl.classList.contains('hidden')) {
           e.stopPropagation();
           this.closePopover();
         } else if (this.manualModalEl && !this.manualModalEl.classList.contains('hidden')) {
           e.stopPropagation();
           this.closeManual();
+        }
+      } else if (e.key === 'Enter') {
+        if (this.speedrunModalEl && !this.speedrunModalEl.classList.contains('hidden')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.retrySpeedrun();
+        } else if (this.survivalModalEl && !this.survivalModalEl.classList.contains('hidden')) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.retrySurvival();
         }
       }
     }, { capture: true });
@@ -510,12 +605,10 @@ class TouchShiftApp {
       }, 150);
     });
 
-    // Mode selector buttons (Strict vs Buffer)
+    // Mode selector buttons (Strict vs Buffer vs Speedrun vs Survival)
     document.querySelectorAll('.mode-pill').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.mode-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.trainer.setMode(btn.dataset.mode);
+        this.setAppMode(btn.dataset.mode);
       });
     });
 
@@ -532,6 +625,10 @@ class TouchShiftApp {
         const val = e.target.value;
         if (val && val.length > 0) {
           const char = val[val.length - 1];
+          if (char === '\n' || char === '\r') {
+            this.hiddenInput.value = '';
+            return;
+          }
           // Pass as key event
           const event = new KeyboardEvent('keydown', { key: char, bubbles: true });
           window.dispatchEvent(event);
@@ -633,6 +730,52 @@ class TouchShiftApp {
     this.trainer.nextSequence();
   }
 
+  setAppMode(mode) {
+    this.currentMode = mode;
+
+    document.querySelectorAll('.mode-pill').forEach(b => {
+      if (b.dataset.mode === mode) b.classList.add('active');
+      else b.classList.remove('active');
+    });
+
+    document.body.classList.remove('mode-speedrun', 'mode-survival');
+    const targetHintBar = document.getElementById('target-hint-bar');
+
+    if (this.speedrunBanner) this.speedrunBanner.classList.add('hidden');
+    if (this.survivalBanner) this.survivalBanner.classList.add('hidden');
+    if (this.speedrunModalEl) this.speedrunModalEl.classList.add('hidden');
+    if (this.survivalModalEl) this.survivalModalEl.classList.add('hidden');
+
+    this.speedrunEngine.stop();
+    this.survivalEngine.stop();
+    this.trainer.resume();
+
+    if (mode === 'speedrun') {
+      document.body.classList.add('mode-speedrun');
+      if (targetHintBar) targetHintBar.classList.add('hidden');
+      if (this.speedrunBanner) this.speedrunBanner.classList.remove('hidden');
+      if (this.speedrunBestBadge) this.speedrunBestBadge.textContent = this.speedrunEngine.bestScore;
+      this.speedrunEngine.start();
+      this.trainer.setMode('speedrun');
+    } else if (mode === 'survival') {
+      document.body.classList.add('mode-survival');
+      if (targetHintBar) targetHintBar.classList.add('hidden');
+      if (this.survivalBanner) this.survivalBanner.classList.remove('hidden');
+      if (this.survivalBestBadge) this.survivalBestBadge.textContent = this.survivalEngine.bestWave;
+      this.survivalEngine.start();
+      this.trainer.setMode('survival');
+      this.survivalEngine.setSequence(this.trainer.currentSequence);
+    } else {
+      const currentGuideMode = localStorage.getItem('touchshift_guide_mode') || 'full';
+      if (currentGuideMode !== 'hidden' && currentGuideMode !== 'zen') {
+        if (targetHintBar) targetHintBar.classList.remove('hidden');
+      }
+      this.trainer.setMode(mode);
+    }
+
+    this.focusInput();
+  }
+
   renderSequence({ sequence, currentIndex, statusArray, isMistake }) {
     if (!this.sequenceDisplayEl) return;
     this.sequenceDisplayEl.innerHTML = '';
@@ -656,6 +799,13 @@ class TouchShiftApp {
         }
       }
 
+      // Ghost racer indicator in Survival mode
+      if (this.currentMode === 'survival' && this.survivalEngine && this.survivalEngine.ghostActive) {
+        if (index === this.survivalEngine.ghostIndex) {
+          slot.classList.add('ghost-active');
+        }
+      }
+
       this.sequenceDisplayEl.appendChild(slot);
     });
 
@@ -667,18 +817,41 @@ class TouchShiftApp {
   handleCharAdvance({ char, index, isCorrect, currentIndex }) {
     this.audio.playKeyClick();
     this.stats.recordCharAdvance(char);
+
+    if (this.currentMode === 'speedrun') {
+      this.speedrunEngine.recordKey(true);
+    } else if (this.currentMode === 'survival') {
+      this.survivalEngine.onPlayerKeyAdvance();
+    }
+
     this.updateHUD();
   }
 
   handleCharMistake({ expectedChar, typedChar, index }) {
     this.audio.playErrorSound();
     this.stats.recordCharMistake(expectedChar);
+
+    if (this.currentMode === 'speedrun') {
+      this.speedrunEngine.recordKey(false);
+    } else if (this.currentMode === 'survival') {
+      this.survivalEngine.onPlayerMistake();
+      // Ensure ghost starts typing even if player's first attempt is a mistake
+      if (!this.survivalEngine.ghostActive && this.survivalEngine.ghostState === 'waiting') {
+        this.survivalEngine.onFirstPlayerKey();
+      }
+    }
+
     this.updateHUD();
   }
 
   handleSequenceComplete({ sequence, length, timeSpentMs }) {
     this.audio.playSuccessChime();
     this.stats.recordSequenceComplete();
+
+    if (this.currentMode === 'survival') {
+      this.survivalEngine.onPlayerSequenceComplete();
+    }
+
     this.updateHUD();
 
     // Trigger visual celebration ripple
@@ -692,7 +865,221 @@ class TouchShiftApp {
 
   handleSkip() {
     this.stats.recordSkip();
+    if (this.currentMode === 'survival') {
+      this.survivalEngine.setSequence(this.trainer.currentSequence);
+    }
     this.updateHUD();
+  }
+
+  // --- Speedrun Mode Methods ---
+  handleSpeedrunTick({ remainingMs, secondsFormatted, totalKeysTyped, progressRatio, hasStarted }) {
+    if (this.speedrunTimerEl) {
+      this.speedrunTimerEl.textContent = `${secondsFormatted}s`;
+      const secondsNum = remainingMs / 1000;
+      if (secondsNum <= 5) {
+        this.speedrunTimerEl.classList.add('critical-warning');
+        this.speedrunTimerEl.classList.remove('urgent-warning');
+      } else if (secondsNum <= 15) {
+        this.speedrunTimerEl.classList.add('urgent-warning');
+        this.speedrunTimerEl.classList.remove('critical-warning');
+      } else {
+        this.speedrunTimerEl.classList.remove('urgent-warning', 'critical-warning');
+      }
+    }
+    if (this.speedrunProgressFill) {
+      this.speedrunProgressFill.style.width = `${Math.round(progressRatio * 100)}%`;
+    }
+    if (this.speedrunKeysBadge) {
+      this.speedrunKeysBadge.textContent = `${totalKeysTyped} key${totalKeysTyped === 1 ? '' : 's'}`;
+    }
+    if (this.speedrunStatusHint) {
+      this.speedrunStatusHint.textContent = hasStarted ? 'Sprint in progress!' : 'Type any key to start';
+    }
+  }
+
+  handleSpeedrunComplete(results) {
+    this.audio.playGameOver();
+    this.trainer.pause();
+
+    if (this.speedrunResultKeys) this.speedrunResultKeys.textContent = results.totalKeysTyped;
+    if (this.speedrunResultCpm) this.speedrunResultCpm.textContent = results.cpm;
+    if (this.speedrunResultWpm) this.speedrunResultWpm.textContent = results.wpm;
+    if (this.speedrunResultAcc) this.speedrunResultAcc.textContent = `${results.accuracy}%`;
+    if (this.speedrunResultBest) this.speedrunResultBest.textContent = results.bestScore;
+
+    if (this.speedrunNewRecord) {
+      if (results.isNewBest && results.totalKeysTyped > 0) {
+        this.speedrunNewRecord.classList.remove('hidden');
+      } else {
+        this.speedrunNewRecord.classList.add('hidden');
+      }
+    }
+
+    if (this.speedrunModalEl) {
+      this.speedrunModalEl.classList.remove('hidden');
+    }
+  }
+
+  closeSpeedrunModal() {
+    this.retrySpeedrun();
+  }
+
+  retrySpeedrun() {
+    if (this.speedrunModalEl) this.speedrunModalEl.classList.add('hidden');
+    this.speedrunEngine.start();
+    this.trainer.nextSequence();
+    setTimeout(() => {
+      this.trainer.resume();
+      this.focusInput();
+    }, 60);
+  }
+
+  // --- Survival Mode Methods ---
+  handleGhostStep({ ghostIndex }) {
+    this.updateGhostSlot(ghostIndex);
+  }
+
+  updateGhostSlot(ghostIndex) {
+    if (!this.sequenceDisplayEl) return;
+    const slots = this.sequenceDisplayEl.querySelectorAll('.char-slot');
+    slots.forEach((slot, idx) => {
+      if (idx === ghostIndex && this.currentMode === 'survival' && this.survivalEngine.ghostActive) {
+        slot.classList.add('ghost-active');
+      } else {
+        slot.classList.remove('ghost-active');
+      }
+    });
+  }
+
+  handleGhostOvertake({ remainingLives, wave }) {
+    this.audio.playGhostOvertake();
+    this.updateHearts(remainingLives, remainingLives);
+
+    if (remainingLives > 0) {
+      if (this.flowFeedbackEl) {
+        this.flowFeedbackEl.textContent = 'Ghost overtook you! -1 Life';
+        this.flowFeedbackEl.classList.add('flash-error');
+        setTimeout(() => {
+          this.flowFeedbackEl.textContent = '';
+          this.flowFeedbackEl.classList.remove('flash-error');
+        }, 1200);
+      }
+
+      // Reset sequence: Ghost only starts after player hits first key!
+      this.trainer.resetCurrentSequence();
+      this.survivalEngine.setSequence(this.trainer.currentSequence);
+    }
+  }
+
+  handleLifeLost({ remainingLives, reason }) {
+    this.audio.playHeartLost();
+    this.updateHearts(remainingLives, remainingLives);
+  }
+
+  handleWaveComplete({ clearedWave, nextWave, newGhostSpeed }) {
+    this.audio.playGameWonRound();
+    if (this.survivalWaveValEl) this.survivalWaveValEl.textContent = `Wave ${nextWave}`;
+    if (this.ghostSpeedNumEl) this.ghostSpeedNumEl.textContent = `${newGhostSpeed} CPM`;
+
+    if (this.flowFeedbackEl) {
+      this.flowFeedbackEl.textContent = `Wave ${clearedWave} Cleared! 🔥`;
+      this.flowFeedbackEl.classList.add('flash-success');
+      setTimeout(() => {
+        this.flowFeedbackEl.textContent = '';
+        this.flowFeedbackEl.classList.remove('flash-success');
+      }, 900);
+    }
+  }
+
+  handleSurvivalGameOver(results) {
+    this.audio.playGameOver();
+    this.trainer.pause();
+
+    if (this.survivalResultWaves) this.survivalResultWaves.textContent = results.wavesSurvived;
+    if (this.survivalResultKeys) this.survivalResultKeys.textContent = results.totalKeysTyped;
+    if (this.survivalResultSpeed) this.survivalResultSpeed.textContent = `${results.finalGhostSpeed} CPM`;
+    if (this.survivalResultErrors) this.survivalResultErrors.textContent = results.totalErrors;
+    if (this.survivalResultBest) this.survivalResultBest.textContent = results.bestWave;
+
+    if (this.survivalCauseText) {
+      if (results.cause === 'ghost_overtake') {
+        this.survivalCauseText.textContent = 'The ghost was faster and depleted your last life.';
+      } else {
+        this.survivalCauseText.textContent = 'You made 3 mistakes and ran out of lives.';
+      }
+    }
+
+    if (this.survivalNewRecord) {
+      if (results.isNewBest && results.wavesSurvived > 0) {
+        this.survivalNewRecord.classList.remove('hidden');
+      } else {
+        this.survivalNewRecord.classList.add('hidden');
+      }
+    }
+
+    if (this.survivalModalEl) {
+      this.survivalModalEl.classList.remove('hidden');
+    }
+  }
+
+  closeSurvivalModal() {
+    this.retrySurvival();
+  }
+
+  retrySurvival() {
+    if (this.survivalModalEl) this.survivalModalEl.classList.add('hidden');
+    this.survivalEngine.start();
+    this.trainer.nextSequence();
+    this.survivalEngine.setSequence(this.trainer.currentSequence);
+    setTimeout(() => {
+      this.trainer.resume();
+      this.focusInput();
+    }, 60);
+  }
+
+  updateHearts(lives, shakeIdx = -1) {
+    if (!this.survivalHeartsEl) return;
+    const hearts = this.survivalHeartsEl.querySelectorAll('.survival-heart');
+    hearts.forEach((heart, idx) => {
+      if (idx < lives) {
+        heart.classList.add('active');
+        heart.classList.remove('lost');
+        heart.textContent = '❤️';
+      } else {
+        heart.classList.remove('active');
+        heart.classList.add('lost');
+        heart.textContent = '💔';
+      }
+
+      if (idx === shakeIdx) {
+        heart.classList.add('shaking');
+        setTimeout(() => heart.classList.remove('shaking'), 400);
+      }
+    });
+  }
+
+  handleSurvivalStateUpdate(state) {
+    this.updateHearts(state.lives);
+    if (this.survivalWaveValEl) this.survivalWaveValEl.textContent = `Wave ${state.wave}`;
+    if (this.ghostSpeedNumEl) this.ghostSpeedNumEl.textContent = `${state.ghostSpeedCPM} CPM`;
+
+    if (this.ghostStatusTextEl) {
+      if (state.ghostState === 'waiting') {
+        this.ghostStatusTextEl.textContent = 'Ghost waiting for first key...';
+      } else if (state.ghostState === 'racing') {
+        this.ghostStatusTextEl.textContent = 'Ghost is racing!';
+      } else if (state.ghostState === 'overtook') {
+        this.ghostStatusTextEl.textContent = 'Ghost overtook you!';
+      }
+    }
+
+    if (this.survivalGhostPill) {
+      if (state.ghostState === 'racing') {
+        this.survivalGhostPill.classList.add('racing');
+      } else {
+        this.survivalGhostPill.classList.remove('racing');
+      }
+    }
   }
 
   startHudLoop() {

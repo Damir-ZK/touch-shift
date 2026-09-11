@@ -151,4 +151,128 @@ export class SoundSynthesizer {
     osc.start(startTime);
     osc.stop(startTime + duration);
   }
+
+  playHeartLost() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(55, now + 0.25);
+
+    gain.gain.setValueAtTime(0.4 * this.volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.26);
+  }
+
+  playGhostStep() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, now);
+    osc.frequency.exponentialRampToValueAtTime(440, now + 0.04);
+
+    gain.gain.setValueAtTime(0.06 * this.volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.045);
+  }
+
+  playGhostOvertake() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    // Dissonant descending slide
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(440, now);
+    osc1.frequency.exponentialRampToValueAtTime(110, now + 0.35);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(466.16, now); // tritone/semitone dissonance
+    osc2.frequency.exponentialRampToValueAtTime(116.54, now + 0.35);
+
+    gain.gain.setValueAtTime(0.28 * this.volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.36);
+    osc2.stop(now + 0.36);
+  }
+
+  playTimerTick() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.03);
+
+    gain.gain.setValueAtTime(0.2 * this.volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.035);
+  }
+
+  playGameWonRound() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    this.playTone(587.33, now, 0.09, 0.22 * this.volume); // D5
+    this.playTone(739.99, now + 0.06, 0.09, 0.25 * this.volume); // F#5
+    this.playTone(880.00, now + 0.12, 0.18, 0.3 * this.volume); // A5
+  }
+
+  playGameOver() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    this.playTone(392.00, now, 0.18, 0.25 * this.volume); // G4
+    this.playTone(369.99, now + 0.14, 0.18, 0.25 * this.volume); // F#4
+    this.playTone(349.23, now + 0.28, 0.24, 0.25 * this.volume); // F4
+    this.playTone(329.63, now + 0.44, 0.45, 0.3 * this.volume); // E4
+  }
 }

@@ -2,6 +2,8 @@ import assert from 'node:assert';
 import { PRESETS, SequenceGenerator } from '../src/engine/generator.js';
 import { KEY_DEFINITIONS, getCharMeta } from '../src/components/keyboardGuide.js';
 import { StatsTracker } from '../src/engine/stats.js';
+import { SpeedrunEngine } from '../src/engine/speedrunEngine.js';
+import { SurvivalEngine, MAX_LIVES, INITIAL_GHOST_CPM, MAX_GHOST_CPM } from '../src/engine/survivalEngine.js';
 
 console.log('--- Running Automated Unit Tests for TouchShift Engine ---');
 
@@ -193,4 +195,163 @@ for (let i = 0; i < 50; i++) {
 }
 console.log('✓ Weak keys preset test passed.');
 
-console.log('\n=== ALL 7 ENGINE TEST SUITES PASSED CLEANLY! ===\n');
+// Test 8: Speedrun Engine Validation
+console.log('Test 8: Testing SpeedrunEngine (60-second countdown and keys count)...');
+let tickCount = 0;
+let lastTickData = null;
+let speedrunCompletedResult = null;
+
+const speedrun = new SpeedrunEngine({
+  onTick: (data) => {
+    tickCount++;
+    lastTickData = data;
+  },
+  onComplete: (res) => {
+    speedrunCompletedResult = res;
+  }
+});
+
+speedrun.start();
+assert.strictEqual(speedrun.remainingMs, 60000, 'Initial speedrun remaining time must be 60000ms');
+assert.strictEqual(speedrun.hasStarted, false, 'Speedrun should not start counting down before first keypress');
+assert.strictEqual(speedrun.totalKeysTyped, 0);
+
+// Record first key
+speedrun.recordKey(true);
+assert.strictEqual(speedrun.hasStarted, true, 'First keypress must activate speedrun timer');
+assert.strictEqual(speedrun.totalKeysTyped, 1, 'Total keys typed must be 1');
+
+// Record more keys and a mistake
+speedrun.recordKey(true);
+speedrun.recordKey(false);
+speedrun.recordKey(true);
+assert.strictEqual(speedrun.totalKeysTyped, 3, 'Total keys typed must be 3');
+assert.strictEqual(speedrun.totalErrors, 1, 'Total errors must be 1');
+
+// Verify finish computes stats
+speedrun.finish();
+assert.strictEqual(speedrunCompletedResult.totalKeysTyped, 3);
+assert.strictEqual(speedrunCompletedResult.totalErrors, 1);
+assert.strictEqual(speedrunCompletedResult.accuracy, 75, 'Accuracy must be 3/4 = 75%');
+assert.strictEqual(speedrun.isActive, false, 'Engine must become inactive after finish');
+
+console.log('✓ SpeedrunEngine test passed.');
+
+// Test 9: Survival Engine Validation
+console.log('Test 9: Testing SurvivalEngine (3 lives, ghost racing, speed scaling)...');
+let ghostStepCalls = 0;
+let ghostOvertakeCalls = 0;
+let lifeLostCalls = 0;
+let waveCompleteCalls = 0;
+let gameOverResult = null;
+
+const survival = new SurvivalEngine({
+  onGhostStep: () => { ghostStepCalls++; },
+  onGhostOvertake: () => { ghostOvertakeCalls++; },
+  onLifeLost: () => { lifeLostCalls++; },
+  onWaveComplete: () => { waveCompleteCalls++; },
+  onGameOver: (res) => { gameOverResult = res; }
+});
+
+survival.start();
+assert.strictEqual(survival.lives, MAX_LIVES, `Must start with ${MAX_LIVES} lives`);
+assert.strictEqual(survival.wave, 1, 'Must start at Wave 1');
+assert.strictEqual(survival.ghostState, 'waiting', 'Ghost must initially be waiting');
+assert.strictEqual(survival.ghostActive, false, 'Ghost must be inactive before player hits first key');
+
+// Set sequence of 4 chars
+survival.setSequence(['!', '@', '#', '$']);
+assert.strictEqual(survival.ghostActive, false, 'Ghost must still wait after sequence is set');
+
+// Player strikes first key
+survival.onPlayerKeyAdvance();
+assert.strictEqual(survival.ghostActive, true, 'Ghost must start racing once player strikes first key');
+assert.strictEqual(survival.ghostState, 'racing');
+
+// Player makes a mistake -> loses 1 life
+survival.onPlayerMistake();
+assert.strictEqual(survival.lives, 2, 'Typo must deduct 1 life');
+assert.strictEqual(lifeLostCalls, 1, 'onLifeLost must be called');
+
+// Ghost overtakes player (ghost completes sequence)
+survival.ghostIndex = 4;
+survival.handleGhostOvertake();
+assert.strictEqual(survival.lives, 1, 'Ghost overtake must deduct 1 life');
+assert.strictEqual(ghostOvertakeCalls, 1, 'onGhostOvertake must be called');
+assert.strictEqual(survival.ghostActive, false, 'Ghost must stop active timer on overtake');
+
+// Reset sequence after overtake -> ghost must wait again!
+survival.setSequence(['1', '2', '3', '4']);
+assert.strictEqual(survival.ghostActive, false, 'Ghost must wait again for first keypress after reset');
+
+// Complete sequence before ghost -> wave completes & speed escalates
+survival.onPlayerKeyAdvance();
+survival.onPlayerSequenceComplete();
+assert.strictEqual(survival.wave, 2, 'Wave must advance to 2');
+assert.strictEqual(waveCompleteCalls, 1, 'onWaveComplete must be called');
+assert(survival.ghostSpeedCPM > INITIAL_GHOST_CPM, 'Ghost speed must increase with wave');
+assert(survival.ghostSpeedCPM <= MAX_GHOST_CPM, 'Ghost speed must not exceed MAX_GHOST_CPM cap');
+
+// Third lost life -> Game Over
+survival.onPlayerMistake();
+assert.strictEqual(survival.lives, 0, 'Lives must reach 0');
+assert(gameOverResult !== null, 'onGameOver must be called when lives reach 0');
+assert.strictEqual(survival.isActive, false, 'SurvivalEngine must be inactive after game over');
+
+// Clean up any timers
+speedrun.stop();
+survival.stop();
+
+console.log('✓ SurvivalEngine test passed.');
+
+// Test 10: Enter Key Safeguard & Modal Regeneration Validation
+console.log('Test 10: Testing Enter key rejection and engine restart regeneration...');
+import { TypingTrainer } from '../src/engine/trainer.js';
+
+let mistakeCount = 0;
+let advanceCount = 0;
+const testTrainer = new TypingTrainer({
+  generator: new SequenceGenerator(),
+  onCharAdvance: () => { advanceCount++; },
+  onCharMistake: () => { mistakeCount++; }
+});
+
+testTrainer.isActive = true;
+testTrainer.currentSequence = ['a', 'b', 'c'];
+testTrainer.currentIndex = 0;
+testTrainer.statusArray = ['pending', 'pending', 'pending'];
+
+// Simulate pressing Enter key
+testTrainer.handleKeyDown({
+  key: 'Enter',
+  preventDefault: () => {}
+});
+
+assert.strictEqual(testTrainer.currentIndex, 0, 'Enter key must NOT advance trainer currentIndex');
+assert.strictEqual(mistakeCount, 0, 'Enter key must NOT register as a mistake');
+assert.strictEqual(advanceCount, 0, 'Enter key must NOT advance characters');
+
+// Direct call to processStrictInput with Enter
+testTrainer.processStrictInput('Enter');
+assert.strictEqual(testTrainer.currentIndex, 0, 'Direct processStrictInput with Enter must be ignored');
+assert.strictEqual(mistakeCount, 0, 'Direct processStrictInput with Enter must not cause mistake');
+
+// Direct call to processStrictInput with newline
+testTrainer.processStrictInput('\n');
+assert.strictEqual(testTrainer.currentIndex, 0, 'Newline must be ignored');
+assert.strictEqual(mistakeCount, 0, 'Newline must not cause mistake');
+
+// Test life regeneration on retry/close
+survival.start();
+assert.strictEqual(survival.lives, MAX_LIVES, 'Restarting survival must regenerate all lives to MAX_LIVES');
+assert.strictEqual(survival.isActive, true, 'Restarting survival must activate engine');
+
+speedrun.start();
+assert.strictEqual(speedrun.remainingMs, 60000, 'Restarting speedrun must reset timer to 60000ms');
+assert.strictEqual(speedrun.isActive, true, 'Restarting speedrun must activate engine');
+
+speedrun.stop();
+survival.stop();
+console.log('✓ Enter key safeguard and modal regeneration tests passed.');
+
+console.log('\n=== ALL 10 ENGINE TEST SUITES PASSED CLEANLY! ===\n');
