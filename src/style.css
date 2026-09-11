@@ -2112,3 +2112,465 @@ body.mode-zen .stage-card {
   color: var(--finger-index);
   background: color-mix(in srgb, var(--finger-index) 12%, transparent);
 }
+
+/* ==========================================================================
+   SPEEDRUN & SURVIVAL MODES STYLING
+   ========================================================================== */
+
+/* Remove finger guidelines from Speedrun and Survival modes completely */
+body.mode-speedrun #target-hint-bar,
+body.mode-survival #target-hint-bar,
+.mode-speedrun #target-hint-bar,
+.mode-survival #target-hint-bar {
+  display: none !important;
+}
+
+/* Common Banner Animation */
+@keyframes banner-appear {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   Shared Banner Layout (Ensures identical sequence display position)
+   -------------------------------------------------------------------------- */
+.speedrun-banner,
+.survival-banner {
+  width: 100%;
+  max-width: 960px;
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  box-sizing: border-box;
+  margin: 0 auto 1.5rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  background: var(--bg-surface);
+  border-radius: 14px;
+  padding: 0 1.25rem;
+  animation: banner-appear 0.25s var(--ease-smooth);
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Speedrun Banner
+   -------------------------------------------------------------------------- */
+.speedrun-banner {
+  border: 1px solid var(--accent-primary);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.speedrun-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.speedrun-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: inline-block;
+  animation: timer-spin 10s linear infinite;
+}
+
+@keyframes timer-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.speedrun-timer-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.speedrun-timer {
+  font-family: var(--font-mono);
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  text-shadow: 0 0 14px var(--accent-glow);
+  line-height: 1;
+  letter-spacing: -0.5px;
+  transition: color var(--trans-fast), text-shadow var(--trans-fast);
+}
+
+.speedrun-timer.urgent-warning {
+  color: #ffb800;
+  text-shadow: 0 0 16px rgba(255, 184, 0, 0.65);
+}
+
+.speedrun-timer.critical-warning {
+  color: #ff3366;
+  text-shadow: 0 0 20px rgba(255, 51, 102, 0.85);
+  animation: pulse-critical 0.5s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-critical {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+.speedrun-status-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.speedrun-banner-center {
+  flex: 1;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+}
+
+.speedrun-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.speedrun-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), #ffb800, #ff3366);
+  border-radius: 999px;
+  transition: width 0.08s linear;
+}
+
+.speedrun-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.speedrun-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--slot-bg);
+  height: 34px;
+  padding: 0 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--bg-surface-border);
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+}
+
+.speedrun-badge .badge-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.speedrun-badge .badge-val {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+}
+
+.speedrun-badge.subtle .badge-val {
+  color: var(--accent-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Survival Banner
+   -------------------------------------------------------------------------- */
+.survival-banner {
+  border: 1px solid rgba(255, 51, 102, 0.4);
+  box-shadow: 0 0 22px rgba(255, 51, 102, 0.2);
+}
+
+.survival-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.survival-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #ff3366;
+  text-transform: uppercase;
+}
+
+.survival-hearts {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.survival-heart {
+  font-size: 1.35rem;
+  line-height: 1;
+  display: inline-block;
+  user-select: none;
+  filter: drop-shadow(0 0 8px rgba(255, 51, 102, 0.7));
+  transition: all 0.3s var(--ease-spring);
+}
+
+.survival-heart.lost {
+  filter: grayscale(1) opacity(0.22);
+  transform: scale(0.85);
+}
+
+.survival-heart.shaking {
+  animation: heart-shatter 0.4s ease-in-out;
+}
+
+@keyframes heart-shatter {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.4) rotate(-12deg); filter: drop-shadow(0 0 16px #ff3366); }
+  50% { transform: scale(0.85) rotate(12deg); }
+  75% { transform: scale(1.1) rotate(-6deg); }
+  100% { transform: scale(0.85); filter: grayscale(1) opacity(0.22); }
+}
+
+.survival-banner-center {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: nowrap;
+}
+
+.survival-wave-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.82rem;
+  height: 34px;
+  padding: 0 0.75rem;
+  border-radius: 20px;
+  box-shadow: 0 0 10px var(--accent-glow);
+  box-sizing: border-box;
+}
+
+.survival-ghost-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(181, 23, 158, 0.15);
+  border: 1px solid rgba(181, 23, 158, 0.4);
+  color: #f72585;
+  height: 34px;
+  padding: 0 0.8rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(181, 23, 158, 0.25);
+  transition: all var(--trans-normal);
+  box-sizing: border-box;
+}
+
+.survival-ghost-pill.racing {
+  border-color: #f72585;
+  background: rgba(247, 37, 133, 0.2);
+  box-shadow: 0 0 16px rgba(247, 37, 133, 0.4);
+}
+
+.ghost-badge-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  display: inline-block;
+  animation: ghost-bob 1.5s infinite ease-in-out;
+}
+
+@keyframes ghost-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.ghost-status-text {
+  font-weight: 500;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.ghost-speed-num {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  color: #ffb800;
+  border: 1px solid rgba(255, 184, 0, 0.3);
+}
+
+.survival-banner-right {
+  display: flex;
+  align-items: center;
+}
+
+.survival-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--slot-bg);
+  height: 34px;
+  padding: 0 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--bg-surface-border);
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+}
+
+.survival-badge .badge-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.survival-badge .badge-val {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ff3366;
+}
+
+/* --------------------------------------------------------------------------
+   Ghost Slot Indicator on Target Sequence
+   -------------------------------------------------------------------------- */
+.char-slot.ghost-active {
+  position: relative;
+  border-color: #b5179e !important;
+  box-shadow: 0 0 18px rgba(181, 23, 158, 0.65), inset 0 0 10px rgba(181, 23, 158, 0.35) !important;
+}
+
+.char-slot.ghost-active::before {
+  content: '👻';
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.25rem;
+  filter: drop-shadow(0 0 10px #f72585);
+  pointer-events: none;
+  animation: ghost-hover 0.75s ease-in-out infinite alternate;
+  z-index: 10;
+}
+
+@keyframes ghost-hover {
+  from { transform: translateX(-50%) translateY(0); }
+  to { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* --------------------------------------------------------------------------
+   Result & Game Over Modals
+   -------------------------------------------------------------------------- */
+.result-modal-card {
+  max-width: 520px;
+  border-radius: 18px;
+  border: 1px solid var(--accent-primary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 35px var(--accent-glow);
+}
+
+.survival-theme-card {
+  border-color: rgba(255, 51, 102, 0.5) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 51, 102, 0.35) !important;
+}
+
+.result-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.result-trophy-icon {
+  font-size: 2rem;
+  display: inline-block;
+  filter: drop-shadow(0 0 10px var(--accent-glow));
+}
+
+.result-hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: var(--bg-surface);
+  border-radius: 14px;
+  margin-bottom: 1.25rem;
+  border: 1px solid var(--bg-surface-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.result-hero-num {
+  font-family: var(--font-mono);
+  font-size: 3.8rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent-primary);
+  text-shadow: 0 0 22px var(--accent-glow);
+}
+
+.survival-theme-card .result-hero-num {
+  color: #ff3366;
+  text-shadow: 0 0 22px rgba(255, 51, 102, 0.65);
+}
+
+.result-hero-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.new-record-pill {
+  margin-top: 0.85rem;
+  background: linear-gradient(135deg, #ffb800, #f72585);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: 0 0 16px rgba(255, 184, 0, 0.55);
+  animation: pulse-record 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-record {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+.result-grid {
+  margin-bottom: 0.5rem;
+}
+
+.result-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-kbd {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  margin-left: 0.45rem;
+  vertical-align: middle;
+}
+

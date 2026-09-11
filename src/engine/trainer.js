@@ -26,6 +26,7 @@ export class TypingTrainer {
     this.bufferTyped = []; // for buffer mode
 
     this.isActive = false;
+    this.isPaused = false;
     this.startTime = null;
     this.sequenceStartTime = null;
 
@@ -34,17 +35,27 @@ export class TypingTrainer {
 
   start() {
     this.isActive = true;
+    this.isPaused = false;
     window.addEventListener('keydown', this.boundHandleKeyDown, { capture: true });
     this.nextSequence();
   }
 
   stop() {
     this.isActive = false;
+    this.isPaused = false;
     window.removeEventListener('keydown', this.boundHandleKeyDown, { capture: true });
   }
 
+  pause() {
+    this.isPaused = true;
+  }
+
+  resume() {
+    this.isPaused = false;
+  }
+
   setMode(mode) {
-    if (mode === 'strict' || mode === 'buffer') {
+    if (['strict', 'buffer', 'speedrun', 'survival'].includes(mode)) {
       this.mode = mode;
       this.resetCurrentSequence();
     }
@@ -66,7 +77,8 @@ export class TypingTrainer {
       sequence: this.currentSequence,
       currentIndex: this.currentIndex,
       statusArray: this.statusArray,
-      mode: this.mode
+      mode: this.mode,
+      isNew: true
     });
   }
 
@@ -80,7 +92,8 @@ export class TypingTrainer {
       sequence: this.currentSequence,
       currentIndex: this.currentIndex,
       statusArray: this.statusArray,
-      mode: this.mode
+      mode: this.mode,
+      isReset: true
     });
   }
 
@@ -97,8 +110,8 @@ export class TypingTrainer {
   }
 
   handleKeyDown(event) {
-    // If not active, ignore
-    if (!this.isActive) return;
+    // If not active or currently paused, ignore
+    if (!this.isActive || this.isPaused) return;
 
     // Check if user is typing inside another input element (like theme select or search)
     const target = event.target;
@@ -115,9 +128,9 @@ export class TypingTrainer {
       return;
     }
 
-    // Ignore system / modifier keys alone
+    // Ignore system / modifier / control keys
     const ignoredKeys = [
-      'Shift', 'Control', 'Alt', 'Meta', 'CapsLock',
+      'Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Enter',
       'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
       'Home', 'End', 'PageUp', 'PageDown', 'Insert', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12'
     ];
@@ -129,14 +142,16 @@ export class TypingTrainer {
     // Prevent default browser behavior on printable keys (e.g., '/' quick-find, space scroll)
     event.preventDefault();
 
-    if (this.mode === 'strict') {
-      this.processStrictInput(event.key);
-    } else {
+    if (this.mode === 'buffer') {
       this.processBufferInput(event.key);
+    } else {
+      // 'strict', 'speedrun', and 'survival' all use instant-advance strict validation
+      this.processStrictInput(event.key);
     }
   }
 
   processStrictInput(typedChar) {
+    if (!typedChar || typedChar === 'Enter' || typedChar === '\n' || typedChar === '\r') return;
     if (this.currentIndex >= this.currentSequence.length) return;
 
     const expectedChar = this.currentSequence[this.currentIndex];
@@ -194,6 +209,7 @@ export class TypingTrainer {
   }
 
   processBufferInput(key) {
+    if (!key || key === 'Enter' || key === '\n' || key === '\r') return;
     if (key === 'Backspace') {
       if (this.bufferTyped.length > 0) {
         this.bufferTyped.pop();
