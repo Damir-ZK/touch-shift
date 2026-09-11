@@ -44,7 +44,6 @@
         <button type="button" class="preset-pill" data-preset="numbers" id="preset-numbers" title="Numbers Row: 1234567890-=">
           <span class="lang-flag">123</span>
           <span>Numbers</span>
-          <span class="pill-preview">12345</span>
         </button>
         <button type="button" class="preset-pill" data-preset="combined-en" id="preset-combined-en" title="Numbers + EN Shift">
           <span class="lang-flag">EN+</span>
@@ -124,35 +123,28 @@
     <!-- Sequence Config Bar (Length, Mode, Instant Restart) -->
     <div class="config-bar">
       <div class="config-item" id="length-config-item">
-        <span class="config-label">Length:</span>
-        <div class="length-steppers" id="length-steppers">
-          <!-- Min Stepper -->
-          <div class="stepper-box" title="Minimum sequence characters">
-            <span class="stepper-sublabel">Min</span>
-            <button type="button" class="stepper-btn" id="min-len-dec" aria-label="Decrease minimum characters">−</button>
-            <input type="number" id="min-len-input" class="stepper-input" min="1" max="10" value="3" aria-label="Minimum characters" />
-            <button type="button" class="stepper-btn" id="min-len-inc" aria-label="Increase minimum characters">+</button>
-          </div>
-
-          <span class="stepper-divider">–</span>
-
-          <!-- Max Stepper -->
-          <div class="stepper-box" title="Maximum sequence characters (capped by screen size)">
-            <span class="stepper-sublabel">Max</span>
-            <button type="button" class="stepper-btn" id="max-len-dec" aria-label="Decrease maximum characters">−</button>
-            <input type="number" id="max-len-input" class="stepper-input" min="1" max="10" value="6" aria-label="Maximum characters" />
-            <button type="button" class="stepper-btn" id="max-len-inc" aria-label="Increase maximum characters">+</button>
-          </div>
-
-          <!-- Summary / Status Badge -->
-          <span class="length-badge" id="length-badge" title="Active sequence length mode">3–6 (Random)</span>
-        </div>
+        <button type="button" class="length-trigger-btn" id="length-trigger-btn" title="Adjust sequence length, character font scale, and display fit">
+          <svg class="btn-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <span class="config-label">Length:</span>
+          <span class="length-badge" id="length-badge">3–6 (Random)</span>
+          <span class="trigger-chevron">▾</span>
+        </button>
       </div>
 
       <div class="config-item">
         <span class="config-label">Mode:</span>
         <div class="mode-pills" id="mode-selector">
-          <button type="button" class="mode-pill active" data-mode="strict" title="Instant Advance on correct key; wrong key flashes red">Strict (Recommended)</button>
+          <button type="button" class="mode-pill active" data-mode="strict" title="Instant Advance on correct key; wrong key flashes red">Strict</button>
           <button type="button" class="mode-pill" data-mode="buffer" title="Standard buffer with backspace allowed">Buffer</button>
         </div>
       </div>
@@ -251,6 +243,103 @@
       </div>
     </section>
   </div>
+
+  <!-- Sequence Length & Display Fit Popover Modal -->
+  <aside id="display-fit-popover" class="modal-dialog hidden" aria-modal="true" role="dialog" aria-labelledby="popover-title">
+    <div class="popover-overlay" id="popover-overlay"></div>
+    <div class="popover-card">
+      <div class="popover-header">
+        <div class="popover-title-group">
+          <div class="popover-badge-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <div>
+            <h2 id="popover-title" class="popover-title">Length &amp; Display Fit</h2>
+            <p class="popover-sub">Scale sequence font size, configure character range, and adapt to screen.</p>
+          </div>
+        </div>
+        <button type="button" class="icon-btn-close" id="popover-close-btn" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div class="popover-body">
+        <!-- Live Screen Fit Capacity Card -->
+        <div class="fit-capacity-card" id="fit-capacity-card">
+          <div class="fit-capacity-icon">🖥️</div>
+          <div class="fit-capacity-details">
+            <div class="fit-capacity-heading">Display Fit Capacity</div>
+            <div class="fit-capacity-desc">
+              Your screen fits up to <strong id="capacity-val" class="highlight-capacity">14</strong> keys horizontally without overflowing at the current font size.
+            </div>
+          </div>
+          <button type="button" class="tiny-btn highlight" id="set-max-fit-btn" title="Set Max Length to match your screen fit capacity">
+            Fit Screen
+          </button>
+        </div>
+
+        <!-- Sequence Font Size Scaler -->
+        <div class="popover-control-group">
+          <div class="control-group-header">
+            <div class="control-group-title">
+              <span class="ctrl-icon">🔤</span>
+              <label for="font-size-slider">Character Font Size</label>
+            </div>
+            <span class="control-group-badge" id="font-size-val">3.2rem</span>
+          </div>
+
+          <div class="slider-wrapper">
+            <input type="range" id="font-size-slider" class="styled-range" min="1.8" max="4.5" step="0.1" value="3.2" aria-label="Sequence character font size" />
+          </div>
+
+          <div class="font-presets" id="font-presets">
+            <button type="button" class="font-preset-btn" data-size="2.2">Compact</button>
+            <button type="button" class="font-preset-btn" data-size="2.8">Medium</button>
+            <button type="button" class="font-preset-btn active" data-size="3.2">Standard</button>
+            <button type="button" class="font-preset-btn" data-size="3.8">Large</button>
+            <button type="button" class="font-preset-btn" data-size="4.4">Huge</button>
+          </div>
+        </div>
+
+        <!-- Length Sliders (Min and Max) -->
+        <div class="popover-control-group">
+          <div class="control-group-header">
+            <div class="control-group-title">
+              <span class="ctrl-icon">📏</span>
+              <span>Sequence Character Range</span>
+            </div>
+            <span class="control-group-badge" id="popover-length-summary">3–6 keys</span>
+          </div>
+
+          <div class="dual-slider-box">
+            <!-- Min Slider -->
+            <div class="length-slider-row">
+              <div class="slider-row-labels">
+                <span class="slider-type-label">Minimum Length</span>
+                <span class="slider-num-pill" id="min-len-display">3</span>
+              </div>
+              <input type="range" id="popover-min-slider" class="styled-range" min="1" max="14" value="3" aria-label="Minimum sequence length" />
+            </div>
+
+            <!-- Max Slider -->
+            <div class="length-slider-row">
+              <div class="slider-row-labels">
+                <span class="slider-type-label">Maximum Length</span>
+                <span class="slider-num-pill" id="max-len-display">6</span>
+              </div>
+              <input type="range" id="popover-max-slider" class="styled-range" min="1" max="14" value="6" aria-label="Maximum sequence length" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="popover-footer">
+        <button type="button" class="primary-btn-sm" id="popover-done-btn">Apply &amp; Continue Typing</button>
+      </div>
+    </div>
+  </aside>
 
   <!-- Stats & Weak Keys Modal Drawer -->
   <aside id="stats-drawer" class="stats-drawer hidden" aria-modal="true" role="dialog" aria-labelledby="stats-title">

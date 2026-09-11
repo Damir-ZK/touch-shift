@@ -47,14 +47,25 @@ class TouchShiftApp {
     this.soundIconOff = document.getElementById('sound-icon-off');
     this.themeSelector = document.getElementById('theme-selector');
 
-    // Length Stepper Elements
-    this.minLenInput = document.getElementById('min-len-input');
-    this.maxLenInput = document.getElementById('max-len-input');
-    this.minLenDec = document.getElementById('min-len-dec');
-    this.minLenInc = document.getElementById('min-len-inc');
-    this.maxLenDec = document.getElementById('max-len-dec');
-    this.maxLenInc = document.getElementById('max-len-inc');
+    // Sequence Font Scale State
+    this.fontSize = parseFloat(localStorage.getItem('touchshift_font_size') || '3.2');
+
+    // Length & Popover Elements
+    this.lengthTriggerBtn = document.getElementById('length-trigger-btn');
     this.lengthBadge = document.getElementById('length-badge');
+    this.popoverEl = document.getElementById('display-fit-popover');
+    this.popoverOverlay = document.getElementById('popover-overlay');
+    this.popoverCloseBtn = document.getElementById('popover-close-btn');
+    this.popoverDoneBtn = document.getElementById('popover-done-btn');
+    this.fontSizeSlider = document.getElementById('font-size-slider');
+    this.fontSizeVal = document.getElementById('font-size-val');
+    this.capacityVal = document.getElementById('capacity-val');
+    this.setMaxFitBtn = document.getElementById('set-max-fit-btn');
+    this.popoverMinSlider = document.getElementById('popover-min-slider');
+    this.popoverMaxSlider = document.getElementById('popover-max-slider');
+    this.minLenDisplay = document.getElementById('min-len-display');
+    this.maxLenDisplay = document.getElementById('max-len-display');
+    this.popoverLengthSummary = document.getElementById('popover-length-summary');
 
     // Skip button
     this.skipBtn = document.getElementById('skip-btn');
@@ -87,6 +98,7 @@ class TouchShiftApp {
     this.initSoundUI();
     this.initGuideMode();
     this.initCustomPanel();
+    this.applyFontSize(this.fontSize, false);
     this.initLengthUI();
     this.bindEvents();
     this.startHudLoop();
@@ -96,8 +108,73 @@ class TouchShiftApp {
     this.focusInput();
   }
 
+  applyFontSize(size, triggerUpdate = true) {
+    this.fontSize = Math.max(1.8, Math.min(parseFloat(size) || 3.2, 4.5));
+    document.documentElement.style.setProperty('--sequence-font-size', `${this.fontSize}rem`);
+    localStorage.setItem('touchshift_font_size', String(this.fontSize));
+
+    if (this.fontSizeSlider) {
+      this.fontSizeSlider.value = this.fontSize;
+    }
+    if (this.fontSizeVal) {
+      this.fontSizeVal.textContent = `${this.fontSize.toFixed(1)}rem`;
+    }
+
+    // Update preset font button states
+    document.querySelectorAll('.font-preset-btn').forEach(btn => {
+      const presetSize = parseFloat(btn.dataset.size);
+      if (Math.abs(presetSize - this.fontSize) < 0.15) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    this.maxFittingChars = this.calculateMaxFittingChars(this.fontSize);
+    this.updatePopoverCapacity();
+
+    if (this.maxLength && this.maxLength > this.maxFittingChars) {
+      const newMin = Math.min(this.minLength, this.maxFittingChars);
+      this.setLengthRange(newMin, this.maxFittingChars, triggerUpdate);
+    } else {
+      this.updateLengthUI();
+    }
+  }
+
+  calculateMaxFittingChars(fontSize = this.fontSize) {
+    const stageCard = this.stageCardEl || document.querySelector('.stage-card');
+    let availableWidth;
+    if (stageCard && stageCard.clientWidth > 0) {
+      const style = window.getComputedStyle(stageCard);
+      const padLeft = parseFloat(style.paddingLeft) || 40;
+      const padRight = parseFloat(style.paddingRight) || 40;
+      availableWidth = stageCard.clientWidth - padLeft - padRight;
+    } else {
+      const screenW = window.innerWidth || document.documentElement.clientWidth || 1024;
+      availableWidth = Math.min(screenW * 0.94 - 48, 1400);
+    }
+
+    const slotWidth = fontSize * 16 * 1.45;
+    const gap = Math.max(8, Math.min(window.innerWidth * 0.014, 20));
+
+    const maxChars = Math.floor((availableWidth + gap) / (slotWidth + gap));
+    return Math.max(2, Math.min(maxChars, 24));
+  }
+
+  updatePopoverCapacity() {
+    if (this.capacityVal) {
+      this.capacityVal.textContent = this.maxFittingChars;
+    }
+    if (this.popoverMinSlider) {
+      this.popoverMinSlider.max = this.maxFittingChars;
+    }
+    if (this.popoverMaxSlider) {
+      this.popoverMaxSlider.max = this.maxFittingChars;
+    }
+  }
+
   initLengthUI() {
-    this.maxFittingChars = this.calculateMaxFittingChars();
+    this.maxFittingChars = this.calculateMaxFittingChars(this.fontSize);
     const savedMin = parseInt(localStorage.getItem('touchshift_min_len'), 10);
     const savedMax = parseInt(localStorage.getItem('touchshift_max_len'), 10);
 
@@ -107,49 +184,32 @@ class TouchShiftApp {
       : Math.max(initialMin, Math.min(6, this.maxFittingChars));
 
     this.setLengthRange(initialMin, initialMax, false);
-  }
-
-  calculateMaxFittingChars() {
-    const stageCard = this.stageCardEl || document.querySelector('.stage-card');
-    let availableWidth;
-    if (stageCard && stageCard.clientWidth > 0) {
-      const style = window.getComputedStyle(stageCard);
-      const padLeft = parseFloat(style.paddingLeft) || 32;
-      const padRight = parseFloat(style.paddingRight) || 32;
-      availableWidth = stageCard.clientWidth - padLeft - padRight;
-    } else {
-      const screenW = window.innerWidth || document.documentElement.clientWidth || 1024;
-      availableWidth = Math.min(screenW - 64, 1096);
-    }
-
-    let slotWidth = 80;
-    let gap = 20;
-    const screenWidth = window.innerWidth;
-    if (screenWidth <= 640) {
-      slotWidth = 50;
-      gap = 10;
-    } else if (screenWidth <= 900) {
-      slotWidth = 60;
-      gap = 14;
-    }
-
-    const maxChars = Math.floor((availableWidth + gap) / (slotWidth + gap));
-    return Math.max(3, Math.min(maxChars, 24));
+    this.updatePopoverCapacity();
   }
 
   updateLengthUI() {
-    if (!this.minLenInput || !this.maxLenInput) return;
+    if (this.popoverMinSlider) {
+      this.popoverMinSlider.value = this.minLength;
+      this.popoverMinSlider.max = this.maxFittingChars;
+    }
+    if (this.popoverMaxSlider) {
+      this.popoverMaxSlider.value = this.maxLength;
+      this.popoverMaxSlider.max = this.maxFittingChars;
+    }
+    if (this.minLenDisplay) {
+      this.minLenDisplay.textContent = this.minLength;
+    }
+    if (this.maxLenDisplay) {
+      this.maxLenDisplay.textContent = this.maxLength;
+    }
 
-    this.minLenInput.value = this.minLength;
-    this.maxLenInput.value = this.maxLength;
+    const summaryText = this.minLength === this.maxLength
+      ? `${this.minLength} keys (Fixed)`
+      : `${this.minLength}–${this.maxLength} keys (Random)`;
 
-    this.minLenInput.max = this.maxFittingChars;
-    this.maxLenInput.max = this.maxFittingChars;
-
-    if (this.minLenDec) this.minLenDec.disabled = this.minLength <= 1;
-    if (this.minLenInc) this.minLenInc.disabled = this.minLength >= this.maxFittingChars;
-    if (this.maxLenDec) this.maxLenDec.disabled = this.maxLength <= 1;
-    if (this.maxLenInc) this.maxLenInc.disabled = this.maxLength >= this.maxFittingChars;
+    if (this.popoverLengthSummary) {
+      this.popoverLengthSummary.textContent = summaryText;
+    }
 
     if (this.lengthBadge) {
       if (this.minLength === this.maxLength) {
@@ -181,6 +241,19 @@ class TouchShiftApp {
       this.trainer.nextSequence();
       this.focusInput();
     }
+  }
+
+  openPopover() {
+    if (!this.popoverEl) return;
+    this.updatePopoverCapacity();
+    this.updateLengthUI();
+    this.popoverEl.classList.remove('hidden');
+  }
+
+  closePopover() {
+    if (!this.popoverEl) return;
+    this.popoverEl.classList.add('hidden');
+    this.focusInput();
   }
 
   initGuideMode() {
@@ -230,12 +303,13 @@ class TouchShiftApp {
       this.stageCardEl.addEventListener('click', () => this.focusInput());
     }
     document.addEventListener('click', (e) => {
-      // Don't steal focus if clicking buttons, dropdowns, inputs, or stats drawer
+      // Don't steal focus if clicking buttons, dropdowns, inputs, stats drawer, or modal dialog
       if (
         !e.target.closest('button') &&
         !e.target.closest('select') &&
         !e.target.closest('input') &&
-        !e.target.closest('.stats-drawer')
+        !e.target.closest('.stats-drawer') &&
+        !e.target.closest('.modal-dialog')
       ) {
         this.focusInput();
       }
@@ -287,76 +361,76 @@ class TouchShiftApp {
       });
     });
 
-    // Length Stepper & Input Event Handlers
-    if (this.minLenDec) {
-      this.minLenDec.addEventListener('click', () => {
-        this.setLengthRange(this.minLength - 1, this.maxLength);
+    // Length Popover Trigger & Modal Events
+    if (this.lengthTriggerBtn) {
+      this.lengthTriggerBtn.addEventListener('click', () => {
+        this.openPopover();
       });
     }
 
-    if (this.minLenInc) {
-      this.minLenInc.addEventListener('click', () => {
-        const nextMin = this.minLength + 1;
+    if (this.popoverCloseBtn) {
+      this.popoverCloseBtn.addEventListener('click', () => {
+        this.closePopover();
+      });
+    }
+
+    if (this.popoverDoneBtn) {
+      this.popoverDoneBtn.addEventListener('click', () => {
+        this.closePopover();
+      });
+    }
+
+    if (this.popoverOverlay) {
+      this.popoverOverlay.addEventListener('click', () => {
+        this.closePopover();
+      });
+    }
+
+    // Close popover on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.popoverEl && !this.popoverEl.classList.contains('hidden')) {
+        e.stopPropagation();
+        this.closePopover();
+      }
+    }, { capture: true });
+
+    // Sequence Font Size Slider
+    if (this.fontSizeSlider) {
+      this.fontSizeSlider.addEventListener('input', (e) => {
+        this.applyFontSize(parseFloat(e.target.value));
+      });
+    }
+
+    // Sequence Font Size Presets
+    document.querySelectorAll('.font-preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const size = parseFloat(btn.dataset.size);
+        this.applyFontSize(size);
+      });
+    });
+
+    // Popover Min Length Slider
+    if (this.popoverMinSlider) {
+      this.popoverMinSlider.addEventListener('input', (e) => {
+        const nextMin = parseInt(e.target.value, 10);
         const nextMax = Math.max(this.maxLength, nextMin);
         this.setLengthRange(nextMin, nextMax);
       });
     }
 
-    if (this.maxLenDec) {
-      this.maxLenDec.addEventListener('click', () => {
-        const nextMax = this.maxLength - 1;
+    // Popover Max Length Slider
+    if (this.popoverMaxSlider) {
+      this.popoverMaxSlider.addEventListener('input', (e) => {
+        const nextMax = parseInt(e.target.value, 10);
         const nextMin = Math.min(this.minLength, nextMax);
         this.setLengthRange(nextMin, nextMax);
       });
     }
 
-    if (this.maxLenInc) {
-      this.maxLenInc.addEventListener('click', () => {
-        this.setLengthRange(this.minLength, this.maxLength + 1);
-      });
-    }
-
-    const handleMinInputCommit = () => {
-      if (!this.minLenInput) return;
-      const val = parseInt(this.minLenInput.value, 10);
-      if (isNaN(val)) {
-        this.minLenInput.value = this.minLength;
-        return;
-      }
-      const nextMin = Math.max(1, Math.min(val, this.maxFittingChars));
-      const nextMax = Math.max(this.maxLength, nextMin);
-      this.setLengthRange(nextMin, nextMax);
-    };
-
-    const handleMaxInputCommit = () => {
-      if (!this.maxLenInput) return;
-      const val = parseInt(this.maxLenInput.value, 10);
-      if (isNaN(val)) {
-        this.maxLenInput.value = this.maxLength;
-        return;
-      }
-      const nextMax = Math.max(1, Math.min(val, this.maxFittingChars));
-      const nextMin = Math.min(this.minLength, nextMax);
-      this.setLengthRange(nextMin, nextMax);
-    };
-
-    if (this.minLenInput) {
-      this.minLenInput.addEventListener('change', handleMinInputCommit);
-      this.minLenInput.addEventListener('blur', handleMinInputCommit);
-      this.minLenInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.target.blur();
-        }
-      });
-    }
-
-    if (this.maxLenInput) {
-      this.maxLenInput.addEventListener('change', handleMaxInputCommit);
-      this.maxLenInput.addEventListener('blur', handleMaxInputCommit);
-      this.maxLenInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.target.blur();
-        }
+    // Set Max Fit Button
+    if (this.setMaxFitBtn) {
+      this.setMaxFitBtn.addEventListener('click', () => {
+        this.setLengthRange(this.minLength, this.maxFittingChars);
       });
     }
 
@@ -365,9 +439,10 @@ class TouchShiftApp {
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        const newMaxFitting = this.calculateMaxFittingChars();
+        const newMaxFitting = this.calculateMaxFittingChars(this.fontSize);
         if (newMaxFitting !== this.maxFittingChars) {
           this.maxFittingChars = newMaxFitting;
+          this.updatePopoverCapacity();
           const adjustedMax = Math.min(this.maxLength, this.maxFittingChars);
           const adjustedMin = Math.min(this.minLength, adjustedMax);
           const changed = adjustedMax !== this.maxLength || adjustedMin !== this.minLength;
