@@ -425,21 +425,6 @@ body {
   display: none;
 }
 
-.preset-pill[data-preset="weak"] {
-  color: var(--accent-secondary);
-}
-
-.preset-pill[data-preset="weak"]:hover {
-  color: var(--text-main);
-  background: var(--bg-surface-hover);
-}
-
-.preset-pill[data-preset="weak"].active {
-  background: var(--accent-primary);
-  color: var(--text-on-accent, #000);
-  font-weight: 700;
-  box-shadow: 0 0 16px var(--accent-glow);
-}
 
 .preset-pill {
   display: inline-flex;
