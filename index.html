@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyber-neon">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TouchShift — Blindfold Number &amp; Shift Layer Trainer</title>
+  <meta name="description" content="High-speed, zero-friction blindfold muscle memory trainer for numbers and Shift layer characters in English (!@#$%^&*()_+) and Cyrillic (!&quot;№;%:?*()_+)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- Background ambient glow canvas -->
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <!-- Hidden input for mobile keyboard compatibility & autofocus safeguard -->
+  <input type="text" id="hidden-input" class="visually-hidden" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+
+  <div class="app-container">
+    <!-- Top Header Navigation & Controls -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-badge">
+          <span class="pulse-dot"></span>
+          <span class="badge-text">TouchShift</span>
+        </div>
+        <h1 class="visually-hidden">Blindfold Number &amp; Shift Layer Trainer</h1>
+        <span class="sub-badge">Blindfold Trainer</span>
+      </div>
+
+      <!-- Center Preset Bar -->
+      <nav class="preset-selector" aria-label="Character Set Presets">
+        <button type="button" class="preset-pill active" data-preset="en-shift" id="preset-en-shift" title="English Shift Layer: !@#$%^&*()_+">
+          <span class="lang-flag">EN</span>
+          <span>Shift</span>
+          <span class="pill-preview">!@#$%</span>
+        </button>
+        <button type="button" class="preset-pill" data-preset="ru-shift" id="preset-ru-shift" title="Cyrillic Shift Layer: !&quot;№;%:?*()_+">
+          <span class="lang-flag">RU</span>
+          <span>Shift</span>
+          <span class="pill-preview">!"№;:</span>
+        </button>
+        <button type="button" class="preset-pill" data-preset="numbers" id="preset-numbers" title="Numbers Row: 1234567890-=">
+          <span class="lang-flag">123</span>
+          <span>Numbers</span>
+          <span class="pill-preview">12345</span>
+        </button>
+        <button type="button" class="preset-pill" data-preset="combined-en" id="preset-combined-en" title="Numbers + EN Shift">
+          <span class="lang-flag">EN+</span>
+          <span>Combined</span>
+        </button>
+        <button type="button" class="preset-pill" data-preset="combined-ru" id="preset-combined-ru" title="Numbers + RU Shift">
+          <span class="lang-flag">RU+</span>
+          <span>Combined</span>
+        </button>
+        <button type="button" class="preset-pill" data-preset="all" id="preset-all" title="All Mixed: Numbers + EN + RU">
+          <span class="lang-flag">ALL</span>
+          <span>Mixed</span>
+        </button>
+        <button type="button" class="preset-pill" data-preset="custom" id="preset-custom" title="Custom Character Selection">
+          <span>⚙️ Custom</span>
+        </button>
+      </nav>
+
+      <!-- Right Control Bar -->
+      <div class="header-controls">
+        <!-- Audio selector popover trigger -->
+        <button type="button" class="icon-btn" id="sound-toggle-btn" title="Sound Effects (Mute / Unmute / Volume)">
+          <svg id="sound-icon-on" class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg id="sound-icon-off" class="btn-svg hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+
+        <!-- Keyboard Guide mode toggle -->
+        <div class="guide-mode-toggle" title="Keyboard Guide Visibility">
+          <button type="button" class="guide-mode-btn active" data-guide-mode="full" id="guide-mode-full">Guide</button>
+          <button type="button" class="guide-mode-btn" data-guide-mode="ghost" id="guide-mode-ghost">Ghost</button>
+          <button type="button" class="guide-mode-btn" data-guide-mode="hidden" id="guide-mode-hidden">Blindfold</button>
+        </div>
+
+        <!-- Weak Keys / Heatmap Button -->
+        <button type="button" class="icon-btn" id="stats-open-btn" title="Weak Keys &amp; Statistics">
+          <svg class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span class="btn-label">Stats</span>
+        </button>
+
+        <!-- Theme Selector -->
+        <select id="theme-selector" class="theme-select" title="Color Theme">
+          <option value="cyber-neon">Cyber Neon</option>
+          <option value="terminal">Matrix Green</option>
+          <option value="tokyo-night">Tokyo Night</option>
+          <option value="nord-frost">Nord Frost</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Custom Character Selector Drawer (Collapsible) -->
+    <section id="custom-chars-panel" class="custom-panel hidden" aria-label="Custom Character Selection">
+      <div class="custom-panel-header">
+        <span class="custom-panel-title">Pick Target Characters to Practice:</span>
+        <div class="custom-quick-actions">
+          <button type="button" class="tiny-btn" id="custom-select-all">Select All</button>
+          <button type="button" class="tiny-btn" id="custom-clear-all">Clear All</button>
+          <button type="button" class="tiny-btn highlight" id="custom-select-weak">Only Weak Keys (&lt;85%)</button>
+        </div>
+      </div>
+      <div id="custom-chars-grid" class="custom-grid"></div>
+    </section>
+
+    <!-- Sequence Config Bar (Length, Mode, Instant Restart) -->
+    <div class="config-bar">
+      <div class="config-item">
+        <span class="config-label">Length:</span>
+        <div class="length-pills" id="length-selector">
+          <button type="button" class="length-pill active" data-len="3-6">3–6 (Random)</button>
+          <button type="button" class="length-pill" data-len="3">3</button>
+          <button type="button" class="length-pill" data-len="4">4</button>
+          <button type="button" class="length-pill" data-len="5">5</button>
+          <button type="button" class="length-pill" data-len="6">6</button>
+        </div>
+      </div>
+
+      <div class="config-item">
+        <span class="config-label">Mode:</span>
+        <div class="mode-pills" id="mode-selector">
+          <button type="button" class="mode-pill active" data-mode="strict" title="Instant Advance on correct key; wrong key flashes red">Strict (Recommended)</button>
+          <button type="button" class="mode-pill" data-mode="buffer" title="Standard buffer with backspace allowed">Buffer</button>
+        </div>
+      </div>
+
+      <div class="config-item config-item-right">
+        <span class="shortcut-tip"><kbd>Tab</kbd> or <kbd>Esc</kbd> for next sequence</span>
+        <button type="button" class="skip-btn" id="skip-btn" title="Skip current sequence (Tab / Esc)">
+          <svg class="btn-svg-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+            <line x1="19" y1="5" x2="19" y2="19"></line>
+          </svg>
+          Skip
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Performance HUD -->
+    <div class="hud-bar" id="hud-bar">
+      <div class="hud-metric" id="hud-cpm-card">
+        <span class="hud-label">CPM</span>
+        <span class="hud-val" id="hud-cpm">0</span>
+        <span class="hud-sub" id="hud-wpm">0 WPM</span>
+      </div>
+      <div class="hud-metric" id="hud-acc-card">
+        <span class="hud-label">Accuracy</span>
+        <span class="hud-val" id="hud-acc">100%</span>
+        <span class="hud-sub" id="hud-errors">0 misses</span>
+      </div>
+      <div class="hud-metric" id="hud-streak-card">
+        <span class="hud-label">Streak</span>
+        <span class="hud-val streak-val" id="hud-streak">
+          <span id="streak-count">0</span>
+          <span class="streak-flame" id="streak-flame">🔥</span>
+        </span>
+        <span class="hud-sub" id="hud-best-streak">Best: 0</span>
+      </div>
+      <div class="hud-metric" id="hud-completed-card">
+        <span class="hud-label">Completed</span>
+        <span class="hud-val" id="hud-completed">0</span>
+        <span class="hud-sub" id="hud-session-time">00:00</span>
+      </div>
+    </div>
+
+    <!-- Main Stage: Sequence Display -->
+    <main class="training-stage" id="training-stage">
+      <div class="stage-card" id="stage-card">
+        <!-- Target Character Finger Hint Badge (if guide enabled) -->
+        <div class="target-hint-bar" id="target-hint-bar">
+          <span class="hint-pill" id="hint-finger-badge">Ready</span>
+          <span class="hint-pill shift-hint" id="hint-shift-badge">Use Right Shift</span>
+        </div>
+
+        <!-- The Target Sequence Row -->
+        <div class="sequence-display" id="sequence-display" aria-live="polite">
+          <!-- Dynamically populated character slots -->
+        </div>
+
+        <!-- Flow notification / mini completion flash -->
+        <div class="flow-feedback" id="flow-feedback" aria-hidden="true"></div>
+      </div>
+    </main>
+
+    <!-- Interactive Top-Row Keyboard Visualizer -->
+    <section class="keyboard-section" id="keyboard-section" aria-label="Interactive Top-Row Keyboard Visualizer">
+      <div class="keyboard-panel">
+        <div class="keyboard-header">
+          <div class="keyboard-legend">
+            <span class="legend-item"><span class="legend-dot finger-pinky"></span>Pinky</span>
+            <span class="legend-item"><span class="legend-dot finger-ring"></span>Ring</span>
+            <span class="legend-item"><span class="legend-dot finger-middle"></span>Middle</span>
+            <span class="legend-item"><span class="legend-dot finger-index"></span>Index</span>
+          </div>
+          <div class="shift-rule-banner" id="shift-rule-banner">
+            Opposite Hand Shift Rule: Left-hand keys ➔ Right Shift | Right-hand keys ➔ Left Shift
+          </div>
+        </div>
+
+        <!-- Top-Row Key Container -->
+        <div class="keyboard-keys-row" id="keyboard-keys-row">
+          <!-- Dynamically generated keys with dual EN/RU labels and finger color coding -->
+        </div>
+
+        <!-- Shift Bar Row -->
+        <div class="keyboard-shift-row">
+          <div class="shift-key-guide" id="guide-l-shift">
+            <span class="shift-indicator-glow"></span>
+            <span class="shift-name">Left Shift ⇧</span>
+            <span class="shift-for">(For keys 6, 7, 8, 9, 0, -, =)</span>
+          </div>
+          <div class="keyboard-spacer"></div>
+          <div class="shift-key-guide" id="guide-r-shift">
+            <span class="shift-indicator-glow"></span>
+            <span class="shift-name">Right Shift ⇧</span>
+            <span class="shift-for">(For keys `, 1, 2, 3, 4, 5)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer with Tips and Quick Status -->
+    <footer class="app-footer">
+      <div class="footer-tips">
+        <span>💡 <strong>Touch-typing pro tip:</strong> Keep your fingers on the home row (<code>ASDF / JKL;</code>). Reach up to the number row with the correct finger, then return immediately.</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Stats & Weak Keys Modal Drawer -->
+  <aside id="stats-drawer" class="stats-drawer hidden" aria-modal="true" role="dialog" aria-labelledby="stats-title">
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <div class="drawer-content">
+      <div class="drawer-header">
+        <h2 id="stats-title" class="drawer-title">Performance &amp; Weak Keys</h2>
+        <button type="button" class="icon-btn-close" id="stats-close-btn" aria-label="Close stats">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="stats-summary-grid">
+          <div class="stat-card">
+            <span class="stat-card-num" id="stat-total-typed">0</span>
+            <span class="stat-card-label">Characters Typed</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="stat-overall-acc">100%</span>
+            <span class="stat-card-label">Overall Accuracy</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="stat-max-streak">0</span>
+            <span class="stat-card-label">Best Streak</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card-num" id="stat-avg-cpm">0</span>
+            <span class="stat-card-label">Average CPM</span>
+          </div>
+        </div>
+
+        <div class="weak-keys-section">
+          <div class="weak-keys-header">
+            <h3>Per-Character Accuracy Heatmap</h3>
+            <button type="button" class="primary-btn-sm" id="drill-weak-btn">
+              ⚡ Drill Weak Keys
+            </button>
+          </div>
+          <p class="weak-desc">Shows your accuracy per character. Click any symbol to toggle it directly into your practice set.</p>
+          <div class="weak-keys-table-container">
+            <table class="weak-table">
+              <thead>
+                <tr>
+                  <th>Character</th>
+                  <th>Key / Shift</th>
+                  <th>Attempts</th>
+                  <th>Errors</th>
+                  <th>Accuracy</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="weak-keys-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="drawer-actions">
+          <button type="button" class="danger-btn-sm" id="reset-stats-btn">Reset All Statistics</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Vite module script entry -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
