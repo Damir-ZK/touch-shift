@@ -77,6 +77,7 @@ class TouchShiftApp {
 
     this.initTheme();
     this.initSoundUI();
+    this.initGuideMode();
     this.initCustomPanel();
     this.bindEvents();
     this.startHudLoop();
@@ -84,6 +85,18 @@ class TouchShiftApp {
     // Start training session
     this.trainer.start();
     this.focusInput();
+  }
+
+  initGuideMode() {
+    const savedMode = localStorage.getItem('touchshift_guide_mode') || 'full';
+    document.querySelectorAll('.guide-mode-btn').forEach(btn => {
+      if (btn.dataset.guideMode === savedMode) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    this.keyboardGuide.setMode(savedMode);
   }
 
   initTheme() {
@@ -149,6 +162,7 @@ class TouchShiftApp {
         document.querySelectorAll('.guide-mode-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const mode = btn.dataset.guideMode;
+        localStorage.setItem('touchshift_guide_mode', mode);
         this.keyboardGuide.setMode(mode);
       });
     });

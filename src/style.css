@@ -1339,3 +1339,80 @@ body {
     margin-left: 0;
   }
 }
+
+/* ==========================================================================
+   Full Blindfold Mode (Zen / Minimal Focus)
+   Shows ONLY the 4 mode boxes and the keys in the box (Screenshot 2)
+   ========================================================================== */
+body.mode-full-blindfold {
+  overflow-y: auto;
+}
+
+body.mode-full-blindfold .app-container {
+  min-height: 100vh;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  gap: 2.25rem;
+}
+
+body.mode-full-blindfold .app-header {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 0;
+  margin: 0;
+  width: auto;
+  justify-content: center;
+}
+
+/* Hide all distractions */
+body.mode-full-blindfold .brand-section,
+body.mode-full-blindfold .preset-selector,
+body.mode-full-blindfold #sound-toggle-btn,
+body.mode-full-blindfold #stats-open-btn,
+body.mode-full-blindfold #theme-selector,
+body.mode-full-blindfold #custom-chars-panel,
+body.mode-full-blindfold .config-bar,
+body.mode-full-blindfold .hud-bar,
+body.mode-full-blindfold .keyboard-section,
+body.mode-full-blindfold .app-footer,
+body.mode-full-blindfold #target-hint-bar {
+  display: none !important;
+}
+
+/* The 4 boxes: Guide / Ghost / Blindfold / Full Blindfold */
+body.mode-full-blindfold .header-controls {
+  margin: 0;
+}
+
+body.mode-full-blindfold .guide-mode-toggle {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  backdrop-filter: blur(16px);
+  padding: 4px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+body.mode-full-blindfold .guide-mode-btn {
+  font-size: 0.82rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+}
+
+body.mode-full-blindfold .training-stage {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+body.mode-full-blindfold .stage-card {
+  max-width: 880px;
+  width: 100%;
+  min-height: 200px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}

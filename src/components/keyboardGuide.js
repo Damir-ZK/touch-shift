@@ -216,6 +216,7 @@ export class KeyboardGuide {
 
   setMode(mode) {
     this.mode = mode;
+    document.body.classList.remove('mode-full-blindfold');
     if (!this.sectionEl) return;
 
     this.sectionEl.classList.remove('mode-ghost', 'mode-hidden');
@@ -226,6 +227,10 @@ export class KeyboardGuide {
       if (hintBar) hintBar.classList.remove('hidden');
     } else if (mode === 'hidden') {
       this.sectionEl.classList.add('mode-hidden');
+      if (hintBar) hintBar.classList.add('hidden');
+    } else if (mode === 'full-blindfold') {
+      this.sectionEl.classList.add('mode-hidden');
+      document.body.classList.add('mode-full-blindfold');
       if (hintBar) hintBar.classList.add('hidden');
     } else {
       if (hintBar) hintBar.classList.remove('hidden');
