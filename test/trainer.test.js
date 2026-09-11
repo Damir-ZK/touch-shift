@@ -182,4 +182,15 @@ assert(rangeGen.maxLength >= rangeGen.minLength, 'Max length must not be less th
 
 console.log('✓ Arbitrary Min & Max and Fixed-Length generation test passed.');
 
-console.log('\n=== ALL 6 ENGINE TEST SUITES PASSED CLEANLY! ===\n');
+// Test 7: Weak Keys preset and drill generation
+console.log('Test 7: Testing Weak Keys preset and drill generation...');
+const weakGen = new SequenceGenerator();
+weakGen.setPreset('weak');
+weakGen.setWeakChars(['#', '%']);
+for (let i = 0; i < 50; i++) {
+  const seq = weakGen.generate();
+  assert(seq.split('').every(c => ['#', '%'].includes(c)), `Weak preset must generate only weak characters, got ${seq}`);
+}
+console.log('✓ Weak keys preset test passed.');
+
+console.log('\n=== ALL 7 ENGINE TEST SUITES PASSED CLEANLY! ===\n');

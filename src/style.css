@@ -406,18 +406,6 @@ body {
   50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 16px var(--accent-primary); }
 }
 
-.sub-badge {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--accent-secondary);
-  background: color-mix(in srgb, var(--accent-secondary) 12%, transparent);
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--accent-secondary) 25%, transparent);
-}
-
 /* Preset Selector Bar */
 .preset-selector {
   display: flex;
@@ -428,6 +416,29 @@ body {
   border-radius: 12px;
   border: 1px solid var(--bg-surface-border);
   flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.preset-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.preset-pill[data-preset="weak"] {
+  color: var(--accent-secondary);
+}
+
+.preset-pill[data-preset="weak"]:hover {
+  color: var(--text-main);
+  background: var(--bg-surface-hover);
+}
+
+.preset-pill[data-preset="weak"].active {
+  background: var(--accent-primary);
+  color: var(--text-on-accent, #000);
+  font-weight: 700;
+  box-shadow: 0 0 16px var(--accent-glow);
 }
 
 .preset-pill {

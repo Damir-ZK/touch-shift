@@ -346,10 +346,21 @@ class TouchShiftApp {
     // Preset selector buttons
     document.querySelectorAll('.preset-pill').forEach(btn => {
       btn.addEventListener('click', () => {
+        const presetId = btn.dataset.preset;
+        if (presetId === 'weak') {
+          const weakList = this.stats.getWeakKeys(90, 1);
+          const weakChars = weakList.map(w => w.char);
+          if (weakChars.length > 0) {
+            this.startDrillingWeakKeys(weakChars);
+          } else {
+            alert('Great job! No weak keys detected yet (accuracy >= 90%). Keep typing to build more data!');
+          }
+          return;
+        }
+
         document.querySelectorAll('.preset-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        const presetId = btn.dataset.preset;
         if (presetId === 'custom') {
           this.customPanel.classList.remove('hidden');
           this.generator.setPreset('custom');
@@ -539,29 +550,29 @@ class TouchShiftApp {
 
     if (this.customSelectWeakBtn) {
       this.customSelectWeakBtn.addEventListener('click', () => {
-        const weakList = this.stats.getWeakKeys(85, 1);
+        const weakList = this.stats.getWeakKeys(90, 1);
         const weakChars = weakList.map(w => w.char);
         if (weakChars.length > 0) {
           this.startDrillingWeakKeys(weakChars);
         } else {
-          alert('No weak keys recorded yet (<85% accuracy). Practice a bit more to identify weak spots!');
+          alert('Great job! No weak keys detected yet (accuracy >= 90%). Keep typing to build more data!');
         }
       });
     }
   }
 
   startDrillingWeakKeys(weakChars) {
-    // Switch to custom preset
+    // Switch to weak preset pill
     document.querySelectorAll('.preset-pill').forEach(b => {
-      if (b.dataset.preset === 'custom') b.classList.add('active');
+      if (b.dataset.preset === 'weak') b.classList.add('active');
       else b.classList.remove('active');
     });
 
-    this.customPanel.classList.remove('hidden');
-    this.generator.setPreset('custom');
-    this.generator.setCustomChars(weakChars);
+    this.customPanel.classList.add('hidden');
+    this.generator.setPreset('weak');
+    this.generator.setWeakChars(weakChars);
 
-    // Update custom toggle buttons
+    // Update custom toggle buttons in case user opens Custom drawer later
     const weakSet = new Set(weakChars);
     document.querySelectorAll('.char-toggle-btn').forEach(btn => {
       if (weakSet.has(btn.dataset.char)) {
