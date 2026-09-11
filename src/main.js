@@ -167,7 +167,12 @@ class TouchShiftApp {
       onCharAdvance: (data) => this.handleCharAdvance(data),
       onCharMistake: (data) => this.handleCharMistake(data),
       onSequenceComplete: (data) => this.handleSequenceComplete(data),
-      onSkip: () => this.handleSkip()
+      onSkip: () => this.handleSkip(),
+      onKeyActivity: () => {
+        if (this.stats.isFrozen) {
+          this.stats.unfreeze();
+        }
+      }
     });
 
     this.initTheme();
@@ -321,6 +326,7 @@ class TouchShiftApp {
 
   openPopover() {
     if (!this.popoverEl) return;
+    this.stats.freeze();
     this.updatePopoverCapacity();
     this.updateLengthUI();
     this.popoverEl.classList.remove('hidden');
@@ -334,6 +340,7 @@ class TouchShiftApp {
 
   openManual() {
     if (!this.manualModalEl) return;
+    this.stats.freeze();
     this.manualModalEl.classList.remove('hidden');
   }
 
@@ -389,6 +396,26 @@ class TouchShiftApp {
     if (this.stageCardEl) {
       this.stageCardEl.addEventListener('click', () => this.focusInput());
     }
+
+    // Freeze stats on any GUI element interaction (buttons, selectors, inputs, drawers, modals)
+    const freezeOnGUI = (e) => {
+      const isStage = (this.stageCardEl && this.stageCardEl.contains(e.target)) || (e.target && e.target.id === 'hidden-input');
+      if (!isStage) {
+        this.stats.freeze();
+      }
+    };
+
+    document.addEventListener('pointerdown', freezeOnGUI, { capture: true });
+    document.addEventListener('focusin', (e) => {
+      if (e.target && e.target.id !== 'hidden-input') {
+        this.stats.freeze();
+      }
+    });
+
+    window.addEventListener('blur', () => {
+      this.stats.freeze();
+    });
+
     document.addEventListener('click', (e) => {
       // Don't steal focus if clicking buttons, dropdowns, inputs, stats drawer, or modal dialog
       if (
@@ -732,6 +759,7 @@ class TouchShiftApp {
 
   setAppMode(mode) {
     this.currentMode = mode;
+    this.stats.freeze();
 
     document.querySelectorAll('.mode-pill').forEach(b => {
       if (b.dataset.mode === mode) b.classList.add('active');
@@ -900,6 +928,8 @@ class TouchShiftApp {
   handleSpeedrunComplete(results) {
     this.audio.playGameOver();
     this.trainer.pause();
+    this.stats.freeze(results.cpm);
+    this.updateHUD();
 
     if (this.speedrunResultKeys) this.speedrunResultKeys.textContent = results.totalKeysTyped;
     if (this.speedrunResultCpm) this.speedrunResultCpm.textContent = results.cpm;
@@ -926,8 +956,10 @@ class TouchShiftApp {
 
   retrySpeedrun() {
     if (this.speedrunModalEl) this.speedrunModalEl.classList.add('hidden');
+    this.stats.freeze(0);
     this.speedrunEngine.start();
     this.trainer.nextSequence();
+    this.updateHUD();
     setTimeout(() => {
       this.trainer.resume();
       this.focusInput();
@@ -994,6 +1026,8 @@ class TouchShiftApp {
   handleSurvivalGameOver(results) {
     this.audio.playGameOver();
     this.trainer.pause();
+    this.stats.freeze();
+    this.updateHUD();
 
     if (this.survivalResultWaves) this.survivalResultWaves.textContent = results.wavesSurvived;
     if (this.survivalResultKeys) this.survivalResultKeys.textContent = results.totalKeysTyped;
@@ -1028,9 +1062,11 @@ class TouchShiftApp {
 
   retrySurvival() {
     if (this.survivalModalEl) this.survivalModalEl.classList.add('hidden');
+    this.stats.freeze(0);
     this.survivalEngine.start();
     this.trainer.nextSequence();
     this.survivalEngine.setSequence(this.trainer.currentSequence);
+    this.updateHUD();
     setTimeout(() => {
       this.trainer.resume();
       this.focusInput();

@@ -60,6 +60,7 @@ export class WeakKeysView {
 
   open() {
     if (!this.drawerEl) return;
+    this.stats.freeze();
     this.drawerEl.classList.remove('hidden');
     this.render();
   }

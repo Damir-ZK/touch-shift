@@ -141,6 +141,92 @@ assert.strictEqual(stats.getAccuracy(), 67);
 
 const weak = stats.getWeakKeys(85, 1);
 assert(weak.some(w => w.char === '^'), '^ must be detected as weak key');
+const weakCaret = weak.find(w => w.char === '^');
+assert.strictEqual(weakCaret.attempts, 3, '^ should have 3 attempts (2 correct + 1 mistake)');
+assert.strictEqual(weakCaret.errors, 1);
+assert.strictEqual(weakCaret.accuracy, 67);
+
+// User-reported bug scenario:
+// "When you make a mistake (e.g. press 4 instead of 5) it doesn't count this as an attempt, but only as a mistake."
+// 1st keystroke: mistake on '5'
+stats.recordCharMistake('5');
+let charStats5 = stats.getAllCharStats().find(s => s.char === '5');
+assert.strictEqual(charStats5.attempts, 1, '1st mistake must count as 1 attempt');
+assert.strictEqual(charStats5.errors, 1, '1st mistake must record 1 error');
+assert.strictEqual(charStats5.accuracy, 0, '1 mistake out of 1 attempt must be 0% accuracy, not 100%');
+
+// 2nd keystroke: correct '5'
+stats.recordCharAdvance('5');
+charStats5 = stats.getAllCharStats().find(s => s.char === '5');
+assert.strictEqual(charStats5.attempts, 2, 'Follow-up correct keypress must increment attempts to 2');
+assert.strictEqual(charStats5.errors, 1, 'Errors remain 1');
+assert.strictEqual(charStats5.accuracy, 50, '1 error out of 2 attempts must be exactly 50% accuracy, not 0%');
+
+// Test legacy v1 storage migration (where attempts only counted advances)
+global.localStorage.setItem('touchshift_stats_v1', JSON.stringify({
+  bestStreak: 10,
+  perCharStats: {
+    '7': { attempts: 1, errors: 1 }, // 1 advance, 1 mistake in v1
+    '8': { attempts: 0, errors: 1 }  // 0 advances, 1 mistake in v1
+  }
+}));
+const migratedStats = new StatsTracker();
+const char7 = migratedStats.getAllCharStats().find(s => s.char === '7');
+assert.strictEqual(char7.attempts, 2, 'Legacy char 7 should be migrated from 1 to 2 attempts');
+assert.strictEqual(char7.errors, 1);
+assert.strictEqual(char7.accuracy, 50);
+
+const char8 = migratedStats.getAllCharStats().find(s => s.char === '8');
+assert.strictEqual(char8.attempts, 1, 'Legacy char 8 should be migrated from 0 to 1 attempt');
+assert.strictEqual(char8.errors, 1);
+assert.strictEqual(char8.accuracy, 0);
+
+// Test CPM / WPM Freezing:
+// 1. Initially frozen at 0
+const freezeTracker = new StatsTracker();
+assert.strictEqual(freezeTracker.isFrozen, true, 'Stats tracker must start frozen until first keystroke');
+assert.strictEqual(freezeTracker.getCPM(), 0);
+assert.strictEqual(freezeTracker.getWPM(), 0);
+
+// 2. Active typing unfreezes
+freezeTracker.recordCharAdvance('a');
+assert.strictEqual(freezeTracker.isFrozen, false, 'First keypress must unfreeze stats');
+
+// Simulate rapid keystrokes to establish a CPM
+const t0 = performance.now();
+freezeTracker.recentTypedTimestamps = [t0 - 1000, t0 - 750, t0 - 500, t0 - 250, t0]; // 5 keys in 1s = 300 CPM
+freezeTracker.lastCalculatedCPM = 300;
+
+// 3. Condition 2: Completing a sequence freezes CPM
+freezeTracker.recordSequenceComplete();
+assert.strictEqual(freezeTracker.isFrozen, true, 'Completing sequence must freeze CPM');
+const frozenVal = freezeTracker.getCPM();
+assert(frozenVal > 0, `Frozen CPM must be preserved, got ${frozenVal}`);
+assert.strictEqual(freezeTracker.getWPM(), Math.round(frozenVal / 5));
+
+// Even if time passes, getCPM() must NOT decay
+assert.strictEqual(freezeTracker.getCPM(), frozenVal, 'Frozen CPM must not change over time');
+
+// 4. Condition 1: GUI interaction freezes CPM
+freezeTracker.unfreeze();
+assert.strictEqual(freezeTracker.isFrozen, false);
+freezeTracker.freeze();
+assert.strictEqual(freezeTracker.isFrozen, true, 'Calling freeze() on GUI interaction must freeze CPM');
+
+// 5. Condition 3: Speedrun mode completion / Survival game over freezes with fixed score
+freezeTracker.freeze(240);
+assert.strictEqual(freezeTracker.isFrozen, true);
+assert.strictEqual(freezeTracker.getCPM(), 240, 'Speedrun finish must freeze CPM to speedrun result');
+assert.strictEqual(freezeTracker.getWPM(), 48, 'WPM must match frozen CPM');
+
+// 6. Next keystroke unfreezes and shifts timestamps forward so pause time is excluded
+freezeTracker.freezeStartTime = performance.now() - 5000; // Simulated 5s freeze pause
+const oldestBefore = freezeTracker.recentTypedTimestamps[0];
+freezeTracker.recordCharAdvance('b');
+assert.strictEqual(freezeTracker.isFrozen, false, 'Next keypress unfreezes stats');
+const oldestAfter = freezeTracker.recentTypedTimestamps[0];
+assert(oldestAfter >= oldestBefore + 4900, 'Pause duration must be shifted forward in timestamps to prevent CPM drop');
+
 console.log('✓ Stats engine test passed.');
 
 // Test 6: Arbitrary Min & Max Sequence Lengths and Fixed-Length Mode

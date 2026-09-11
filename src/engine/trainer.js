@@ -10,7 +10,8 @@ export class TypingTrainer {
     onCharAdvance,
     onCharMistake,
     onSequenceComplete,
-    onSkip
+    onSkip,
+    onKeyActivity
   }) {
     this.generator = generator;
     this.onSequenceUpdate = onSequenceUpdate || (() => {});
@@ -18,6 +19,7 @@ export class TypingTrainer {
     this.onCharMistake = onCharMistake || (() => {});
     this.onSequenceComplete = onSequenceComplete || (() => {});
     this.onSkip = onSkip || (() => {});
+    this.onKeyActivity = onKeyActivity || (() => {});
 
     this.mode = 'strict'; // 'strict' | 'buffer'
     this.currentSequence = [];
@@ -141,6 +143,8 @@ export class TypingTrainer {
 
     // Prevent default browser behavior on printable keys (e.g., '/' quick-find, space scroll)
     event.preventDefault();
+
+    this.onKeyActivity(event.key);
 
     if (this.mode === 'buffer') {
       this.processBufferInput(event.key);
