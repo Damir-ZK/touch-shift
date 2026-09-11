@@ -49,6 +49,12 @@ export const PRESETS = {
       '"', '№', ';', ':', '?'
     ],
     description: 'All number row characters and both EN + RU Shift layers'
+  },
+  'weak': {
+    id: 'weak',
+    name: 'Weak Keys',
+    chars: [],
+    description: 'Drill weak and error-prone keys'
   }
 };
 
@@ -56,12 +62,13 @@ export class SequenceGenerator {
   constructor() {
     this.currentPreset = 'en-shift';
     this.customChars = [...PRESETS['en-shift'].chars];
+    this.weakChars = [];
     this.minLength = 3;
     this.maxLength = 6;
   }
 
   setPreset(presetId) {
-    if (PRESETS[presetId] || presetId === 'custom') {
+    if (PRESETS[presetId] || presetId === 'custom' || presetId === 'weak') {
       this.currentPreset = presetId;
     }
   }
@@ -69,6 +76,12 @@ export class SequenceGenerator {
   setCustomChars(chars) {
     if (Array.isArray(chars) && chars.length > 0) {
       this.customChars = [...new Set(chars)];
+    }
+  }
+
+  setWeakChars(chars) {
+    if (Array.isArray(chars) && chars.length > 0) {
+      this.weakChars = [...new Set(chars)];
     }
   }
 
@@ -98,6 +111,11 @@ export class SequenceGenerator {
   }
 
   getActivePool() {
+    if (this.currentPreset === 'weak') {
+      return this.weakChars && this.weakChars.length > 0
+        ? this.weakChars
+        : (this.customChars.length > 0 ? this.customChars : PRESETS['en-shift'].chars);
+    }
     if (this.currentPreset === 'custom') {
       return this.customChars.length > 0 ? this.customChars : PRESETS['en-shift'].chars;
     }
