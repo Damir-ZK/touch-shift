@@ -64,6 +64,11 @@
 
       <!-- Right Control Bar -->
       <div class="header-controls">
+        <!-- Manual / Finger Guide Popover trigger -->
+        <button type="button" class="icon-btn manual-btn" id="manual-toggle-btn" title="Touch Typing Manual &amp; Finger Guide" aria-label="Open Typing Manual">
+          <span class="manual-glyph" aria-hidden="true">?</span>
+        </button>
+
         <!-- Audio selector popover trigger -->
         <button type="button" class="icon-btn" id="sound-toggle-btn" title="Sound Effects (Mute / Unmute / Volume)">
           <svg id="sound-icon-on" class="btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -216,9 +221,6 @@
             <span class="legend-item"><span class="legend-dot finger-ring"></span>Ring</span>
             <span class="legend-item"><span class="legend-dot finger-middle"></span>Middle</span>
             <span class="legend-item"><span class="legend-dot finger-index"></span>Index</span>
-          </div>
-          <div class="shift-rule-banner" id="shift-rule-banner">
-            Opposite Hand Shift Rule: Left-hand keys ➔ Right Shift | Right-hand keys ➔ Left Shift
           </div>
         </div>
 
@@ -401,6 +403,44 @@
         <div class="drawer-actions">
           <button type="button" class="danger-btn-sm" id="reset-stats-btn">Reset All Statistics</button>
         </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Touch Typing Guide Modal -->
+  <aside id="manual-modal" class="modal-dialog hidden" aria-modal="true" role="dialog" aria-labelledby="manual-title">
+    <div class="popover-overlay" id="manual-overlay"></div>
+    <div class="popover-card manual-card">
+      <div class="popover-header manual-header">
+        <h2 id="manual-title" class="manual-clean-title">Touch Typing Guide</h2>
+        <button type="button" class="icon-btn-close" id="manual-close-btn" aria-label="Close guide">✕</button>
+      </div>
+
+      <div class="manual-clean-body">
+        <section class="manual-text-section">
+          <h3 class="manual-text-heading">Before You Start</h3>
+          <p class="manual-text-p">
+            This tool is built specifically to train muscle memory for numbers and top-row symbols. It assumes you already know how to touch-type standard letters without looking down. You still can use it even if you don't, but it'd make much more sense for you to learn the alphabet first.
+          </p>
+        </section>
+
+        <section class="manual-text-section">
+          <h3 class="manual-text-heading">The Golden Habit - Home Row Anchoring</h3>
+          <p class="manual-text-p">
+            For building true muscle memory, the single most critical habit is home row anchoring. Keep your resting fingers anchored over <kbd>ASDF</kbd> and <kbd>JKL;</kbd>. After you strike a number or symbol, return your finger to its home row key before reaching for the next key.
+          </p>
+        </section>
+
+        <section class="manual-text-section">
+          <h3 class="manual-text-heading">Finger Guidelines</h3>
+          <p class="manual-text-p">
+            The finger assignments suggested on the keyboard guide are helpful starting points, not rigid dogmas. Everyone's hands, finger lengths, and keyboards are different. If slight adjustments feel more comfortable or natural for you - like using your ring finger instead of your pinky for outer keys - stick with what works for your hands. The same flexibility applies to the shift keys – in fact, some people use exclusively left shift and that is perfectly fine as well.
+          </p>
+        </section>
+      </div>
+
+      <div class="popover-footer manual-footer">
+        <button type="button" class="primary-btn-sm" id="manual-done-btn">Got It</button>
       </div>
     </div>
   </aside>
