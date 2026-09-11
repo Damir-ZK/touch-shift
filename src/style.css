@@ -1342,21 +1342,26 @@ body {
 
 /* ==========================================================================
    Full Blindfold Mode (Zen / Minimal Focus)
-   Shows ONLY the 4 mode boxes and the keys in the box (Screenshot 2)
+   Shows ONLY the 4 mode boxes at the very top and the keys in the center
    ========================================================================== */
 body.mode-full-blindfold {
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 body.mode-full-blindfold .app-container {
   min-height: 100vh;
   justify-content: center;
   align-items: center;
-  padding: 2rem 1.5rem;
-  gap: 2.25rem;
+  padding: 1.5rem;
+  position: relative;
 }
 
+/* Visibility switchers at the very top */
 body.mode-full-blindfold .app-header {
+  position: fixed;
+  top: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
   background: transparent;
   border: none;
   box-shadow: none;
@@ -1364,7 +1369,7 @@ body.mode-full-blindfold .app-header {
   padding: 0;
   margin: 0;
   width: auto;
-  justify-content: center;
+  z-index: 10;
 }
 
 /* Hide all distractions */
@@ -1393,26 +1398,28 @@ body.mode-full-blindfold .guide-mode-toggle {
   backdrop-filter: blur(16px);
   padding: 4px;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
 
 body.mode-full-blindfold .guide-mode-btn {
   font-size: 0.82rem;
-  padding: 0.45rem 0.9rem;
+  padding: 0.45rem 0.95rem;
   border-radius: 8px;
 }
 
+/* Keys at the very center of the screen, slightly higher than vertical center */
 body.mode-full-blindfold .training-stage {
   margin: 0;
   width: 100%;
   display: flex;
   justify-content: center;
+  transform: translateY(-5vh);
 }
 
 body.mode-full-blindfold .stage-card {
   max-width: 880px;
   width: 100%;
-  min-height: 200px;
-  padding: 3rem 2.5rem;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  min-height: 220px;
+  padding: 3.5rem 3rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 35px var(--accent-glow);
 }
