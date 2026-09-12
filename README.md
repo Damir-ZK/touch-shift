@@ -1,6 +1,7 @@
 # TouchShift — Blindfold Number & Shift Layer Trainer
 
 A fast, zero-friction web application designed to train blindfold touch-typing for top-row numbers and Shift layer characters in English (`!@#$%^&*()_+`) and Cyrillic/Russian (`!"№;%:?*()_+`).
+![TouchShift Demo](docs/touchshift-demo.gif)
 
 ## Features
 - **Zero-Friction Engine**: Automatically advances on typing; when the sequence finishes, a new 4–8 character sequence appears in 0ms without any mouse clicks or delays.
